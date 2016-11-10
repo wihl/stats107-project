@@ -15,7 +15,7 @@ output: pdf_document
 
 Our project aims to create a Mutual Fund / ETF selector for semi-passive investor. 
 A typical Vanguard customer may have over two hundred mutual fund and ETF choices. 
-We will create a portfolio to maximum returns over the long term using several common, non-esoteric investment
+We will create a portfolio to maximize returns over the long term using several common, non-esoteric investment
 strategies, such as maximizing the Sharpe Ratio.
 In order to make this more realistic, we will take into account fees and transaction costs.
 Since this is aimed at a typical Vanguard retail customer, no shorting will be allowed. 
