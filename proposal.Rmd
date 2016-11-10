@@ -26,7 +26,7 @@ We will simulate whether rebalancing on a bi-monthly, monthly, quarterly, semi-a
 We will not account for taxes on the assumption that the funds are in a tax deferred account such as 401(k) or
 IRA. For this reason, we will not evaluate ETFs which are at a disadvantage in a tax deferred account.
 
-The portfolio will start with $100,000, which is current average 401(k) balance 
+The portfolio will start with $100,000, which is the current average 401(k) balance 
 (\href{http://time.com/money/4357248/retirement-401k-vanguard-balance/}{source}).
 
 The overall time period will be evaluated on a twenty year history, or the maximum history of the security, whichever is shorter. 
