@@ -4,17 +4,18 @@ subtitle: "Stats 107 Project Proposal"
 author: "Banti Modi, David Wihl"
 date: "November 16, 2016"
 abstract: |
-  Ten years ago, Warren Buffett made a famous : the ultimate passive investment, the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined by a team of hedge fund experts. Whoever had a lower return after ten years would donate $1 million to the charity of choice of the winner. After eight years, it looks increasingly likely that Buffett will win the bet.
+  Ten years ago, Warren Buffett made a famous bet: the ultimate passive investment, the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined by a team of hedge fund experts. Whoever had a lower return after ten years would donate $1 million to the charity of choice of the winner. After eight years, it looks increasingly likely that Buffett will win the bet.
 output: pdf_document
+linkcolor: blue
 ---
 \begin{center}
 \textbf{Type: Simulating a trading strategy.}
 \end{center}
 
-## Can anyone beat the market in long term?
+## Can a basket of funds beat the market in long term?
 
-Our project aims to create a Mutual Fund / ETF selector for semi-passive investor. 
-A typical Vanguard customer may have over two hundred mutual fund and ETF choices. 
+Our project aims to create a Mutual Fund selector for semi-passive investor. 
+A typical Vanguard customer may have to choose from over one hundred mutual funds without any guidance. 
 We will create a portfolio to maximize returns over the long term using several common, non-esoteric investment
 strategies, such as maximizing the Sharpe Ratio.
 In order to make this more realistic, we will take into account fees and transaction costs.
@@ -22,13 +23,20 @@ Since this is aimed at a typical Vanguard retail customer, no shorting will be a
 
 We will simulate whether rebalancing on a bi-monthly, monthly, quarterly, semi-annual or annual basis is the best strategy. 
 
-The overall time period will be evaluated on a twenty year history, or the maximum history of the security, whichever is shorter.  The baseline or benchmark will be investing the same amount in VFIAX and leaving it there for the
-duration.
+We will not account for taxes on the assumption that the funds are in a tax deferred account such as 401(k) or
+IRA. For this reason, we will not evaluate ETFs which are at a disadvantage in a tax deferred account.
 
-We will not account for taxes on the assumption that the funds are in a tax deferred account such as 401k or
-IRA.
+The portfolio will start with $100,000, which is current average 401(k) balance 
+(\href{http://time.com/money/4357248/retirement-401k-vanguard-balance/}{source}).
+
+The overall time period will be evaluated on a twenty year history, or the maximum history of the security, whichever is shorter. 
+The starting point for the basket of funds will be a common
+default used by many organizations: a Vanguard Target Retirement Fund, such as VTHRX, the 2030 Retirement Fund.
+The baseline or benchmark will be investing the same amount in VFIAX and leaving it there for the
+duration. 
+
 
 ## References and Data Sources
 
-* List of Vanguard funds, including fees and transaction costs, supplied by Vanguard
-* The Buffett [Bet](http://fortune.com/2016/05/11/warren-buffett-hedge-fund-bet/) http://fortune.com/2016/05/11/warren-buffett-hedge-fund-bet/
+* List of Vanguard funds, including fees and transaction costs, supplied by Vanguard https://investor.vanguard.com/mutual-funds/list#/mutual-funds/asset-class/month-end-returns
+* The Buffett Bet http://fortune.com/2016/05/11/warren-buffett-hedge-fund-bet/
