@@ -1,12 +1,14 @@
 ---
 title: "The Buffet Bet - Basket of Funds vs. All Passive"
-subtitle: "Stats 107 Project Proposal"
 author: "Banti Modi, David Wihl"
 date: "November 16, 2016"
+output:
+  html_document: default
+  pdf_document: default
+linkcolor: blue
+subtitle: Stats 107 Project Proposal
 abstract: |
   Ten years ago, Warren Buffett made a famous bet: the ultimate passive investment, the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined by a team of hedge fund experts. Whoever had a lower return after ten years would donate $1 million to the charity of choice of the winner. After eight years, it looks increasingly likely that Buffett will win the bet.
-output: pdf_document
-linkcolor: blue
 ---
 \begin{center}
 \textbf{Type: Simulating a trading strategy.}
@@ -14,24 +16,39 @@ linkcolor: blue
 
 ## Can a basket of funds beat the market in long term?
 
-Our project aims to create a Mutual Fund selector for semi-passive investor. 
-A typical Vanguard customer may have to choose from over one hundred mutual funds without any guidance. 
-We will create a portfolio to maximize returns over the long term using several common, non-esoteric investment
-strategies, such as maximizing the Sharpe Ratio.
-In order to make this more realistic, we will take into account fees and transaction costs.
-Since this is aimed at a typical Vanguard retail customer, no shorting will be allowed. 
+Our project aims ro create a basket of mutual fund and try to use various trading strategies such as periodicaly rebalancing portfoilio's to equal weights and exploiting value vs growth style premiums. In order to make this more realistic, we will take into account fees and transaction costs. Since this is aimed at a typical Vanguard retail customer, no shorting will be allowed. 
 
-We will simulate whether rebalancing on a bi-monthly, monthly, quarterly, semi-annual or annual basis is the best strategy. 
+we will evaluate following 2 strategies-
+
+###1. Periodic wight balancing 
+
+Under the epithet “volatility harvesting”, Bouchey et al (2012) draw attention to the impact of volatility on the compound growth rate (or geometric mean return) of periodically rebalanced
+portfolios. We will try to use this strategy by selecting mutual funds 3 each from growth and value style - Large Cap, Mid Cap, Small cap. We will simulate whether rebalancing on a monthly, quarterly, semi-annual or annual basis is the best strategy. 
+
+###2. Periodic weight balancing with style switching:
+
+As observed in the ( \href {https://www.cxoadvisory.com/4068/value-premium/measuring-the-value-premium-with-style-etfs/#more-4068} {article}) - investors tend to dump value in favor of growth during October-November and revert to value in December. To use this strategy, We will start with 3 mutual funds large, medium and small in value style,  on last day of Sept, we will sell them all and switch to Growth funds. We will again switch to  value funds at the end of November. we will be rebalancing as in first strategy within whichever style we are. 
+
 
 We will not account for taxes on the assumption that the funds are in a tax deferred account such as 401(k) or
 IRA. For this reason, we will not evaluate ETFs which are at a disadvantage in a tax deferred account.
+
 
 The portfolio will start with $100,000, which is the current average 401(k) balance 
 (\href{http://time.com/money/4357248/retirement-401k-vanguard-balance/}{source}).
 
 The overall time period will be evaluated on a twenty year history, or the maximum history of the security, whichever is shorter. 
-The starting point for the basket of funds will be a common
-default used by many organizations: a Vanguard Target Retirement Fund, such as VTHRX, the 2030 Retirement Fund.
+
+Following mutual funds will be selected in each category - 
+
+cap   | Value         | Growth
+----- | ------------- | -------------
+Large | VUVLX         | VWUSX
+Mid   | VCVLX         | VMGRX 
+Small | VBR           | VBK 
+-------------------------------------
+        
+        
 The baseline or benchmark will be investing the same amount in VFIAX and leaving it there for the
 duration. 
 
