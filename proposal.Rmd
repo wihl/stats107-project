@@ -1,7 +1,7 @@
 ---
 title: "The Buffet Bet - Basket of Funds vs. All Passive"
 subtitle: "Stats 107 Project Proposal"
-author: "Banti Modi, David Wihl"
+author: "David Wihl"
 date: "November 16, 2016"
 output:  pdf_document
 linkcolor: blue
@@ -14,7 +14,7 @@ abstract: |
 
 ## Can a basket of funds beat the market in long term?
 
-Our project aims to create a Mutual Fund selector for semi-passive investor. A typical Vanguard customer may have to choose from over one hundred mutual funds without any guidance. We will create a portfolio to maximize returns over the long term using several trading strategies, two of which are listed below. In order to make this more realistic, we will take into account fees and transaction costs. Since this is aimed at a typical Vanguard retail customer, no shorting will be allowed. 
+Our project aims to create a Mutual Fund selector for semi-passive investor. A typical Vanguard customer may have to choose from over one hundred mutual funds without any guidance. We will create a portfolio to maximize returns over the long term using several common trading strategies, such as maximizing the Sharpe ratio. In order to make this more realistic, we will take into account fees and transaction costs. Since this is aimed at a typical Vanguard retail customer, no shorting will be allowed. 
 
 We will not account for taxes on the assumption that the funds are in a tax deferred account such as 401(k) or
 IRA. For this reason, we will not evaluate ETFs which are at a disadvantage in a tax deferred account.
@@ -25,27 +25,12 @@ The portfolio will start with $100,000, which is the current average 401(k) bala
 The overall time period will be evaluated on a twenty year history, or the maximum history of the security, whichever is shorter. 
 
 The baseline or benchmark will be investing the same amount in VFIAX and leaving it 
-there for the duration. 
+there for the duration. The starting fund in the basket will be
+VTHRX, which is one of the typical Vanguard Age-Adjusted balanced
+funds and a common default fund for many retirement plans.
 
  We will simulate whether rebalancing on a monthly, quarterly, semi-annual or annual basis is the best strategy.
 
-## Initial Trading Strategies to be Attempted:
-
-#### 1. Periodic Weight Balancing 
-
-Under the epithet “volatility harvesting”, Bouchey et al (2012) draw attention to the impact of volatility on the compound growth rate (or geometric mean return) of periodically rebalanced
-portfolios. We will try to use this strategy by selecting mutual funds 3 each from growth and value style - Large Cap, Mid Cap, Small cap. 
-
-####2. Periodic weight balancing with style switching:
-
-As observed in \href {https://www.cxoadvisory.com/4068/value-premium/measuring-the-value-premium-with-style-etfs/#more-4068} {Measuring Value Premium} investors tend to dump value in favor of growth during October-November and revert to value in December. To use this strategy, We will start with 3 mutual funds large, medium and small in value style,  on last day of September, we will sell them all and switch to Growth funds. We will again switch to  value funds at the end of November. we will be rebalancing as in first strategy within whichever style we are. At minimum, the following mutual funds will be selected in each category: 
-
-
-Mkt Cap   | Value         | Growth
------ | ------------- | -------------
-Large | VUVLX         | VWUSX
-Mid   | VCVLX         | VMGRX 
-Small | VBR           | VBK 
 
 
 ## References and Data Sources
@@ -54,3 +39,4 @@ Small | VBR           | VBK
 * The Buffet Bet, http://longbets.org/362/
 * Fortune, The Buffett Bet http://fortune.com/2016/05/11/warren-buffett-hedge-fund-bet/
 
+*Note:* This is a solo project, with Dr. Parzen's approval given via email on  11/14
