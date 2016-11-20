@@ -21,16 +21,19 @@ output: pdf_document
 
 ## Importing List of Vanguard Mutual Funds
 ```{r, message=FALSE, warning=FALSE}
+loadRData = function(filename) {
+  # Source: http://stackoverflow.com/questions/5577221/how-can-i-load-an-object-into-a-variable-name-that-i-specify-from-an-r-data-file
+  load(filename)
+  get(ls()[ls()!="filename"])
+}
 library(quantmod)
 fromDate = "1996-12-01"
 toDate   = "2016-10-31"
 funds    = read.csv("data/vanguard.csv",header = T, stringsAsFactors = F)
-```
+# Load from previously cached download
+stockDataEnv= loadRData("data/stockData.RData")
+fundData = mget(funds$Ticker,stockDataEnv)
 
-```{r}
-for (i in 1:5) {
-  getSymbols(funds$Ticker[i],from=fromDate,to=toDate)
-}
 ```
 
 # Results
