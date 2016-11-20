@@ -1,7 +1,7 @@
 ---
 title: "The Buffet Bet - Basket of Funds vs. All Passive"
 subtitle: "Stats 107 Final Project"
-author: "Banti Modi, David Wihl"
+author: "David Wihl"
 date: "December 6, 2016"
 abstract: |
   Ten years ago, Warren Buffett made a famous : the ultimate passive investment, the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined by a team of hedge fund experts. Whoever had a lower return after ten years would donate $1 million to the charity of choice of the winner. After eight years, it looks increasingly likely that Buffett will win the bet.
@@ -18,6 +18,20 @@ output: pdf_document
 # Introduction
 
 # Methods
+
+## Importing List of Vanguard Mutual Funds
+```{r, message=FALSE, warning=FALSE}
+library(quantmod)
+fromDate = "1996-12-01"
+toDate   = "2016-10-31"
+funds    = read.csv("data/vanguard.csv",header = T, stringsAsFactors = F)
+```
+
+```{r}
+for (i in 1:5) {
+  getSymbols(funds$Ticker[i],from=fromDate,to=toDate)
+}
+```
 
 # Results
 

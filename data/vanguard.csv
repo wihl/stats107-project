@@ -1,0 +1,170 @@
+Ticker,Fund Name,Expenses
+NAESX,Vanguard Small-Cap Index Inv,0.20
+VAIPX,Vanguard Inflation-Protected Sec Adm,0.10
+VASGX,Vanguard LifeStrategy Growth Inv,0.15
+VASIX,Vanguard LifeStrategy Income Inv,0.12
+VASVX,Vanguard Selected Value Inv,0.39
+VBIAX,Vanguard Balanced Index Fund Adm,0.08
+VBIIX,Vanguard Interm-Term Bond Index Inv,0.16
+VBILX,Vanguard Intrmd-Term Bond Index  Adm,0.09
+VBINX,Vanguard Balanced Index Inv,0.22
+VBIRX,Vanguard Short-Term Bond Index Adm,0.09
+VBISX,Vanguard Short-Term Bond Index Inv,0.16
+VBLTX,Vanguard Long-Term Bond Index Inv,0.16
+VBMFX,Vanguard Total Bond Market Index Inv,0.16
+VBTLX,Vanguard Total Bond Market Index Adm,0.06
+VCDAX,Vanguard Consumer Discretion Idx Adm,0.09
+VCOBX,Vanguard Core Bond Adm,0.15
+VCORX,Vanguard Core Bond Inv,0.25
+VCSAX,Vanguard Consumer Staples Index Adm,0.10
+VCVLX,Vanguard Capital Value Fund Inv,0.50
+VDADX,Vanguard Dividend Apprec Idx Adm,0.09
+VDAIX,Vanguard Dividend Appreciation Index Inv,0.19
+VDEQX,Vanguard Diversified Equity Inv,0.40
+VDVIX,Vanguard Developed Mkts Index Inv,0.20
+VEIEX,Vanguard Emerging Mkts Stock Index Inv,0.33
+VEIPX,Vanguard Equity Income Inv,0.26
+VEIRX,Vanguard Equity Income Adm,0.17
+VENAX,Vanguard Energy Index Adm,0.10
+VEURX,Vanguard European Stock Index Inv,0.26
+VEUSX,Vanguard European Stock Index Adm,0.12
+VEVFX,Vanguard Explorer Value Inv,0.65
+VEXAX,Vanguard Extended Mkt Index Adm,0.09
+VEXMX,Vanguard Extended Market Index Inv,0.22
+VEXPX,Vanguard Explorer Inv,0.49
+VEXRX,Vanguard Explorer Adm,0.35
+VFAIX,Vanguard Financials Index Adm,0.10
+VFFVX,Vanguard Target Retirement 2055 Inv,0.16
+VFIAX,Vanguard 500 Index Adm,0.05
+VFICX,Vanguard Intermediate-Term Inv Grade Inv,0.20
+VFIDX,Vanguard Interm-Term Inv Grade Adm,0.10
+VFIFX,Vanguard Target Retirement 2050 Inv,0.16
+VFIIX,Vanguard GNMA Inv,0.21
+VFIJX,Vanguard GNMA Adm,0.11
+VFINX,Vanguard 500 Index Inv,0.16
+VFIRX,Vanguard Short-Term Treasury Adm,0.10
+VFISX,Vanguard Short-Term Treasury Inv,0.20
+VFITX,Vanguard Intermediate-Term Treasury Inv,0.20
+VFIUX,Vanguard Interm-Term Treasury Adm,0.10
+VFORX,Vanguard Target Retirement 2040 Inv,0.16
+VFSTX,Vanguard Short-Term Investment Grade Inv,0.20
+VFSUX,Vanguard St-Trm Inv Grade Admiral,0.10
+VFSVX,Van FTSE All-World ex-US S/C Index Inv,0.31
+VFTSX,Vanguard FTSE Social Index Inv,0.25
+VFWAX,Vanguard FTSE All-World ex-US,0.13
+VFWIX,Vanguard FTSE All-World ex-US Index Inv,0.26
+VGELX,Vanguard Energy Adm,0.31
+VGENX,Vanguard Energy Inv,0.37
+VGHAX,Vanguard Health Care Adm,0.31
+VGHCX,Vanguard Health Care Inv,0.36
+VGIAX,Vanguard Growth and Income Adm,0.23
+VGPMX,Vanguard Precious Metals and Mining  Inv,0.35
+VGSIX,Vanguard REIT Index Inv,0.26
+VGSLX,Vanguard REIT Index  Adm,0.12
+VGSTX,Vanguard STAR Inv,0.34
+VGTSX,Vanguard Total Intl Stock Index Inv,0.19
+VHCIX,Vanguard Health Care Index Adm,0.10
+VHDYX,Vanguard High Dividend Yield Index Inv,0.16
+VHGEX,Vanguard Global Equity Inv,0.57
+VIAAX,Vanguard Intl Div Apprec Index Adm,0.25
+VIAIX,Vanguard Intl Div Apprec Index Inv,0.35
+VIGAX,Vanguard Growth Index  Adm,0.08
+VIGRX,Vanguard Growth Index Inv,0.22
+VIHAX,Vanguard Intl High Div Yield Index Adm,0.30
+VIHIX,Vanguard Intl High Div Yield Index Inv,0.40
+VILVX,Vanguard Inst'l Target Retirement 2060,0.10
+VIMAX,Vanguard Mid Cap Index  Adm,0.08
+VIMSX,Vanguard Mid-Cap Index Inv,0.20
+VINAX,Vanguard Industrials Index Adm,0.10
+VINEX,Vanguard International Explorer Inv,0.42
+VIPSX,Vanguard Inflation-Protected Sec Inv,0.20
+VIRSX,Vanguard Inst'l Target Retirement 2040,0.10
+VIRTX,Vanguard Inst'l Target Retirement 2010,0.10
+VISGX,Vanguard Small-Cap Growth Index Inv,0.20
+VISVX,Vanguard Small-Cap Value Index Inv,0.20
+VITAX,Vanguard Information Tech Index Adm,0.10
+VITFX,Vanguard Inst'l Target Retirement 2035,0.10
+VITLX,Vanguard Inst'l Target Retirement 2045,0.10
+VITRX,Vanguard Inst'l Target Retirement Income,0.10
+VITVX,Vanguard Inst'l Target Retirement 2015,0.10
+VITWX,Vanguard Inst'l Target Retirement 2020,0.10
+VIVAX,Vanguard Value Index Inv,0.22
+VIVLX,Vanguard Inst'l Target Retirement 2055,0.10
+VLACX,Vanguard Large-Cap Index Inv,0.20
+VLCAX,Vanguard Large Cap Index  Adm,0.08
+VLGSX,Vanguard Long-Term Govt Bond Idx Adm,0.10
+VMBSX,Vanguard Mortgage-Backed Sec Idx Adm,0.10
+VMGIX,Vanguard Mid-Cap Growth Index Inv,0.20
+VMGMX,Vanguard Mid-Cap Growth Index Adm,0.08
+VMGRX,Vanguard Mid-Cap Growth Inv,0.43
+VMIAX,Vanguard Materials Index Adm,0.10
+VMMSX,Vanguard Emerging Mkts Select Stock Inv,0.93
+VMNFX,Vanguard Market Neutral Inv,0.25
+VMNVX,Vanguard Global Minimum Volatility Adm,0.21
+VMRAX,Vanguard Morgan Growth Adm,0.27
+VMRGX,Vanguard Morgan Growth Inv,0.40
+VMVAX,Vanguard Mid-Cap Value Index Adm,0.08
+VMVFX,Vanguard Global Minimum Volatility,0.27
+VMVIX,Vanguard Mid-Cap Value Index Inv,0.20
+VPACX,Vanguard Pacific Stock Index Inv,0.26
+VPADX,Vanguard Pacific Stock Index Adm,0.12
+VQNPX,Vanguard Growth and Income Inv,0.34
+VRIVX,Vanguard Inst'l Target Retirement 2025,0.10
+VSBSX,Vanguard Short-Term Govt Bd Idx Adm,0.10
+VSCGX,Vanguard LifeStrategy Conserv Growth Inv,0.13
+VSCSX,Vanguard Short Term Corp Bd Index Adm,0.10
+VSEQX,Vanguard Strategic Equity Inv,0.21
+VSGAX,Vanguard Small-Cap Growth Index Adm,0.08
+VSGBX,Vanguard Short-Term Federal Inv,0.20
+VSGDX,Vanguard Short-Term Federal Adm,0.10
+VSIAX,Vanguard Small-Cap Value Index Adm,0.08
+VSIGX,Vanguard Interm-Term Govt Bd Idx Adm,0.10
+VSMAX,Vanguard Small Cap Index  Adm,0.08
+VSMGX,Vanguard LifeStrategy Moderate Gr Inv,0.14
+VSTCX,Vanguard Strategic Small-Cap Equity Inv,0.34
+VTABX,Vanguard Total Intl Bond Index Adm,0.14
+VTAPX,Vanguard Shrt-Term Infl-Prot Sec Idx Adm,0.08
+VTCAX,Vanguard Telecomm Services Index Adm,0.10
+VTCLX,Vanguard Tax-Managed Capital Apprec Adm,0.11
+VTENX,Vanguard Target Retirement 2010 Inv,0.14
+VTHRX,Vanguard Target Retirement 2030 Inv,0.15
+VTIAX,Vanguard Total Intl Stock Index Adm,0.12
+VTIBX,Vanguard Total Intl Bond Index Inv,0.17
+VTINX,Vanguard Target Retirement Income Inv,0.14
+VTIPX,Vanguard Shrt-Term Infl-Prot Sec Idx Inv,0.17
+VTIVX,Vanguard Target Retirement 2045 Inv,0.16
+VTMFX,Vanguard Tax Managed Bal Admiral,0.11
+VTMGX,Vanguard Developed Mkts Index Adm,0.09
+VTMSX,Vanguard Tax-Managed Small-Cap Adm,0.11
+VTRIX,Vanguard International Value Inv,0.46
+VTRLX,Vanguard Inst'l Target Retirement 2050,0.10
+VTSAX,Vanguard Total Stock Mkt Index  Adm,0.05
+VTSMX,Vanguard Total Stock Market Index Inv,0.16
+VTTHX,Vanguard Target Retirement 2035 Inv,0.15
+VTTSX,Vanguard Target Retirement 2060 Inv,0.16
+VTTVX,Vanguard Target Retirement 2025 Inv,0.15
+VTTWX,Vanguard Inst'l Target Retirement 2030,0.10
+VTWNX,Vanguard Target Retirement 2020 Inv,0.14
+VTWSX,Vanguard Total World Stock Index Inv,0.25
+VTXVX,Vanguard Target Retirement 2015 Inv,0.14
+VUBFX,Vanguard Ultra-Short-Term Bond Inv,0.20
+VUIAX,Vanguard Utilities Index Adm,0.10
+VUSTX,Vanguard Long-Term Treasury Inv,0.20
+VUSUX,Vanguard Long-Term Treasury Adm,0.10
+VUVLX,Vanguard U.S. Value Inv,0.26
+VVIAX,Vanguard Value Index Adm,0.08
+VWEAX,Vanguard High Yield Corp  Adm,0.13
+VWEHX,Vanguard High Yield Corp  Inv,0.23
+VWESX,Vanguard Long-Term Investment Grade Inv,0.21
+VWETX,Vanguard Long-Term Inv Grade Adm,0.12
+VWIAX,Vanguard Wellesley Income Adm,0.16
+VWIGX,Vanguard International Growth Inv,0.47
+VWILX,Vanguard International Growth Adm,0.34
+VWINX,Vanguard Wellesley Income Inv,0.23
+VWNAX,Vanguard Windsor II Adm,0.26
+VWNDX,Vanguard Windsor Inv,0.39
+VWNEX,Vanguard Windsor Adm,0.29
+VWNFX,Vanguard Windsor II Inv,0.34
+VWUAX,Vanguard U.S. Growth Adm,0.33
+VWUSX,Vanguard U.S. Growth Inv,0.47
+
