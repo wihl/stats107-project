@@ -1,8 +1,8 @@
 # Download and cache stock symbol data
 # Inspired from http://gekkoquant.com/2012/06/01/stock-data-download-saving-r/
 library(quantmod)
-fromDate = "1996-12-01"
-toDate   = "2016-10-31"
+fromDate = "2000-11-13" # First day VFIAX is available
+toDate   = "2016-11-13" # 16 whole years
 funds    = read.csv("data/vanguard.csv",header = T, 
                     colClasses = c("character","character","numeric"))
 stocksLst = funds$Ticker
@@ -33,7 +33,7 @@ for (i in 1:nrstocks){
         
         #The stock wasnt previously downloaded so lets attempt to download it
         cat("(",i,"/",nrstocks,") ","Downloading ", stocksLst[i] , "\t\t Attempt: ", t , "/", maxretryattempts,"\n")
-        getSymbols(stocksLst[i], env = stockData, src = "yahoo", from = startDate)
+        getSymbols(stocksLst[i], env = stockData, src = "yahoo", from = startDate, to=toDate)
       }
       #Specify the catch function, and the finally function
       , error = function(e) print(e))

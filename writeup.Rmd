@@ -6,6 +6,7 @@ date: "December 6, 2016"
 abstract: |
   Ten years ago, Warren Buffett made a famous : the ultimate passive investment, the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined by a team of hedge fund experts. Whoever had a lower return after ten years would donate $1 million to the charity of choice of the winner. After eight years, it looks increasingly likely that Buffett will win the bet.
 output: pdf_document
+link
 ---
 \begin{center}
 \textbf{Type: Simulating a trading strategy.}
@@ -17,6 +18,15 @@ output: pdf_document
 
 # Introduction
 
+Yahoo only has data on VFIAX starting 2000-11-13.
+
+Quantmod does not use adjusted price to calculate returns. So, basically, it is
+wrong. I found this going through the quantmod sources and then confirmed
+it at http://stackoverflow.com/questions/34772616/r-function-periodreturn-not-computing-returns-using-adjusted-closing-prices
+
+
+
+
 # Methods
 
 ## Importing List of Vanguard Mutual Funds
@@ -27,8 +37,8 @@ loadRData = function(filename) {
   get(ls()[ls()!="filename"])
 }
 library(quantmod)
-fromDate = "1996-12-01"
-toDate   = "2016-10-31"
+fromDate = "2010-11-13"
+toDate   = "2016-11-13"
 funds    = read.csv("data/vanguard.csv",header = T, stringsAsFactors = F)
 # Load from previously cached download
 stockDataEnv= loadRData("data/stockData.RData")
