@@ -47,13 +47,19 @@ colsToDisplay = c("Ticker","Fund.Name","Expenses","CAGR","Sharpe")
 kable(head(funds[order(-funds$Sharpe),colsToDisplay]), caption="Best Sharpe Ratio",
       row.names = F,digits=2)
 
+kable(head(funds[order(funds$Sharpe),colsToDisplay]), caption="Worst Sharpe Ratio",
+      row.names = F,digits=2)
+
 kable(head(funds[order(-funds$CAGR),colsToDisplay]), caption="Best CAGR",
+      row.names = F,digits=2)
+
+kable(head(funds[order(funds$CAGR),colsToDisplay]), caption="Worst CAGR",
       row.names = F,digits=2)
 
 #
 # Show histograms with base VFIAX case
 #
-par(mfrow=c(3,1),pin=c(1.5,1.5))
+par(mfrow=c(3,1), par=rep(4,2))
 
 # CAGR
 hist(funds$CAGR,main="CAGR (all funds)",xlab="")

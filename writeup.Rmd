@@ -6,6 +6,7 @@ date: "December 6, 2016"
 abstract: |
   Ten years ago, Warren Buffett made a famous : the ultimate passive investment, the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined by a team of hedge fund experts. Whoever had a lower return after ten years would donate $1 million to the charity of choice of the winner. After eight years, it looks increasingly likely that Buffett will win the bet.
 output: pdf_document
+linkcolor: blue
 ---
 \begin{center}
 \textbf{Type: Simulating a trading strategy.}
@@ -20,20 +21,28 @@ library(knitr)
 
 # Introduction
 
-Yahoo only has data on VFIAX starting 2000-11-13.
 
-Quantmod does not use adjusted price to calculate returns. So, basically, it is
-wrong. I found this going through the quantmod sources and then confirmed
-it at http://stackoverflow.com/questions/34772616/r-function-periodreturn-not-computing-returns-using-adjusted-closing-prices
-
-Must use OHLC numbers only
-
-
-
+TODO
 
 # Methods
 
+
 ## Importing List of Vanguard Mutual Funds
+
+From Vanguard, I obtain a list of the 168 currently offered mutual funds
+including expense ratio. I converted this into a CSV for easy import into
+R.
+
+Once the list of funds was imported, I used `quantmod` to read in
+historical daily adjusted data for the entire date range available
+from Yahoo. Since the earliest available date was November 13, 2000,
+I chose an even 16 year end period, ending November 13, 2016. While more
+data would have been preferable, I felt that this was a reasonable sample
+given it included two significant market corrections in 2001 and again 2009.
+
+Given the size of data (168 securities, 16 years of daily data) I cached the data locally to allow fast iteration on many models. See appendix for all code.
+
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #
 # Import List of Securities
@@ -52,6 +61,17 @@ fundData = mget(funds$Ticker,stockDataEnv)
 ```
 
 ## Summary Statistics 
+
+Several simple descriptive statistics were created: Total Return, Average
+Daily Return, Standard Deviation / Risk, Sharpe Ratio and CAGR. The following
+two tables summarize the top mutual funds. 
+
+Interestingly, in performing these summary statistics, I determined that
+`quantmod` does not use adjusted price to calculate returns. So, basically, it is
+wrong. I found this going through the quantmod sources and then confirmed
+it at http://stackoverflow.com/questions/34772616/r-function-periodreturn-not-computing-returns-using-adjusted-closing-prices  As an extra precaution, I adjusted values upon retrieving the data using `getSymbol`.
+
+
 
 ```{r, echo=FALSE}
 #
@@ -88,16 +108,24 @@ colsToDisplay = c("Ticker","Fund.Name","Expenses","CAGR","Sharpe")
 kable(head(funds[order(-funds$Sharpe),colsToDisplay]), caption="Best Sharpe Ratio",
       row.names = F,digits=2)
 
+kable(head(funds[order(funds$Sharpe),colsToDisplay]), caption="Worst Sharpe Ratio",
+      row.names = F,digits=2)
+
 kable(head(funds[order(-funds$CAGR),colsToDisplay]), caption="Best CAGR",
+      row.names = F,digits=2)
+
+kable(head(funds[order(funds$CAGR),colsToDisplay]), caption="Worst CAGR",
       row.names = F,digits=2)
 
 ```
 
-```{r, echo=FALSE}
+VMMSX is particularly bad: high expenses, low returns and low Sharpe Ratio.
+
+```{r, echo=FALSE, fig.height=5}
 #
 # Show histograms with base VFIAX case
 #
-par(mfrow=c(3,1),pin=c(1.5,1.5))
+#par(mfrow=c(3,1), mar=rep(2,2))
 
 # CAGR
 hist(funds$CAGR,main="CAGR (all funds)",xlab="")
@@ -111,6 +139,7 @@ abline(v=funds[funds$Ticker=="VFIAX",]$stdDev,col="blue")
 hist(funds$Sharpe,main="Sharpe Ratio (all funds)",xlab="")
 abline(v=funds[funds$Ticker=="VFIAX",]$Sharpe,col="blue")
 ```
+
 
 ## Expense Ratios
 
