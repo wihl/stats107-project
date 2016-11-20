@@ -6,14 +6,16 @@ date: "December 6, 2016"
 abstract: |
   Ten years ago, Warren Buffett made a famous : the ultimate passive investment, the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined by a team of hedge fund experts. Whoever had a lower return after ten years would donate $1 million to the charity of choice of the winner. After eight years, it looks increasingly likely that Buffett will win the bet.
 output: pdf_document
-link
 ---
 \begin{center}
 \textbf{Type: Simulating a trading strategy.}
 \end{center}
 
-```{r echo=FALSE}
-# Code goes here
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+# Load libraries
+library(ggplot2)
+library(quantmod)
+library(knitr)
 ```
 
 # Introduction
@@ -24,27 +26,91 @@ Quantmod does not use adjusted price to calculate returns. So, basically, it is
 wrong. I found this going through the quantmod sources and then confirmed
 it at http://stackoverflow.com/questions/34772616/r-function-periodreturn-not-computing-returns-using-adjusted-closing-prices
 
+Must use OHLC numbers only
 
 
 
 # Methods
 
 ## Importing List of Vanguard Mutual Funds
-```{r, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#
+# Import List of Securities
+#
 loadRData = function(filename) {
   # Source: http://stackoverflow.com/questions/5577221/how-can-i-load-an-object-into-a-variable-name-that-i-specify-from-an-r-data-file
   load(filename)
   get(ls()[ls()!="filename"])
 }
-library(quantmod)
 fromDate = "2010-11-13"
 toDate   = "2016-11-13"
 funds    = read.csv("data/vanguard.csv",header = T, stringsAsFactors = F)
 # Load from previously cached download
 stockDataEnv= loadRData("data/stockData.RData")
 fundData = mget(funds$Ticker,stockDataEnv)
+```
+
+## Summary Statistics 
+
+```{r, echo=FALSE}
+#
+# Generate Summary Statistics
+#
+for (i in 1:nrow(funds)) {
+  sym = funds$Ticker[i]
+  data = eval(parse(text=paste("fundData$",sym,sep="")))
+  if(!is.null(data)){
+    # we have the stockdata; Calculate summary statistics
+    funds$startDate[i] = as.Date(index(data[1]))
+    funds$endDate[i] = as.Date(index(last(data[])))
+    startPrice = as.numeric(Ad(data[1]))
+    endPrice = as.numeric(Ad(last(data[])))
+    funds$totalRet[i] = (endPrice - startPrice) / startPrice
+    dailyRets = dailyReturn(Ad(data))
+    funds$stdDev[i] = sd(dailyRets)
+    funds$avgRet[i] = mean(dailyRets)
+    funds$Sharpe[i] = funds$avgRet[i] / funds$stdDev[i]
+    # CAGR
+    years =  as.numeric((as.Date(funds$endDate[i]) -
+                           as.Date(funds$startDate[i])))/365
+    funds$CAGR[i] = ((endPrice / startPrice)^(1/years)) - 1
+
+  }
+}
+```
+
+```{r, echo=FALSE}
+#
+# Generate Tables of Top Performers
+#
+colsToDisplay = c("Ticker","Fund.Name","Expenses","CAGR","Sharpe")
+kable(head(funds[order(-funds$Sharpe),colsToDisplay]), caption="Best Sharpe Ratio",
+      row.names = F,digits=2)
+
+kable(head(funds[order(-funds$CAGR),colsToDisplay]), caption="Best CAGR",
+      row.names = F,digits=2)
 
 ```
+
+```{r, echo=FALSE}
+#
+# Show histograms with base VFIAX case
+#
+par(mfrow=c(3,1),pin=c(1.5,1.5))
+
+# CAGR
+hist(funds$CAGR,main="CAGR (all funds)",xlab="")
+abline(v=funds[funds$Ticker=="VFIAX",]$CAGR,col="blue")
+
+# Standard Deviation
+hist(funds$stdDev,main="Standard Deviation (all funds)",xlab="")
+abline(v=funds[funds$Ticker=="VFIAX",]$stdDev,col="blue")
+
+# Sharpe Ratio
+hist(funds$Sharpe,main="Sharpe Ratio (all funds)",xlab="")
+abline(v=funds[funds$Ticker=="VFIAX",]$Sharpe,col="blue")
+```
+
 
 # Results
 
@@ -56,11 +122,19 @@ This entire project code including source data can be found on GitHub ([https://
 
 
 
-# Appendix A
+# Appendix A - Code
+
+## Preparing Report
 
 The following is the code used to prepare this report:
 ```{r code=readLines(knitr::purl('writeup.Rmd', documentation = 0)), eval = FALSE}
 
 ```
 
+## Caching Stock Data
+
+Stock data was downloaded and cached with the following code:
+```{r, code=readLines("cache.R"), eval = FALSE}
+
+```
 
