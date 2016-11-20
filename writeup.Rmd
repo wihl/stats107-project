@@ -30,6 +30,7 @@ Must use OHLC numbers only
 
 
 
+
 # Methods
 
 ## Importing List of Vanguard Mutual Funds
@@ -42,7 +43,7 @@ loadRData = function(filename) {
   load(filename)
   get(ls()[ls()!="filename"])
 }
-fromDate = "2010-11-13"
+fromDate = "2000-11-13"
 toDate   = "2016-11-13"
 funds    = read.csv("data/vanguard.csv",header = T, stringsAsFactors = F)
 # Load from previously cached download
@@ -111,6 +112,72 @@ hist(funds$Sharpe,main="Sharpe Ratio (all funds)",xlab="")
 abline(v=funds[funds$Ticker=="VFIAX",]$Sharpe,col="blue")
 ```
 
+## Expense Ratios
+
+Every mutual fund has expense ratios which is the principle way that a 
+company like Vanguard makes money. An expense ratio is a mutual fund's 
+annual operating expense, expressed as a percentage of the fund's average
+net assets. It's calculated annually and removed from the fund's earnings
+before they're distributed to investors, directly reducing investors'
+returns. Since expenses were taken directly from assets, no special calculations
+needed to be made for expenses, since the costs were already reflected in 
+share prices, and therefore the returns.
+
+For VFIAX, Vanguard claims a 0.05% expense ratio. These are
+considered "admiral" class shares. For smaller investors, there
+are "investor" class shares (VFINX) with a 0.16% expense ratio. 
+This expense has gone
+down over time. We shall now examine if this matches reality
+and how returns deviate from the benchmark S&P 500.
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+#
+# Compare claimed Expense Ratios vs. Actual Expense Ratios
+#
+getSymbols("SPY", src="yahoo", from=as.Date(fromDate),to=toDate,adjust=T)
+p0 = as.numeric(Ad(SPY[1]))
+p1 = as.numeric(Ad(last(SPY[])))
+tot = (p1 - p0)/p0
+
+# Compound expenses over an expected 16 year period
+expectedVFIAX = round((1.0005 ^ 16 - 1) * 100, 2)
+expectedVFINX = round((1.0015 ^ 16 - 1) * 100, 2)
+# Determine the percentage difference in total return 
+spyOverVFIAX = (tot - funds[funds$Ticker=="VFIAX",]$totalRet)/ funds[funds$Ticker=="VFIAX",]$totalRet
+spyOverVFINX = (tot - funds[funds$Ticker=="VFINX",]$totalRet)/ funds[funds$Ticker=="VFINX",]$totalRet
+pctOverVFIAX = round(spyOverVFIAX / expectedVFIAX * 100,1)
+pctOverVFINX = round(spyOverVFINX / expectedVFINX * 100,1)
+
+years =  as.numeric((as.Date(funds[funds$Ticker=="VFIAX",]$endDate)) -
+                     as.Date(funds[funds$Ticker=="VFIAX",]$startDate  ))/365
+spy.CAGR =  (p1 / p0)^(1/years)  - 1
+
+```
+
+TODO: Fix expense ratio calculation
+
+Metric | VFINX (Investor) | VFIAX (Admiral)
+-------|------------------|-----------------
+Claimed Expense | 0.15% | 0.05%
+Cum. Exp. 16 Yrs | `r round(expectedVFINX*100,1)`% |  `r round(expectedVFIAX*100,1)`% 
+Actual Expense | `r spyOverVFINX` | `r spyOverVFIAX`
+Difference | `r pctOverVFINX`% | `r pctOverVFIAX`%
+CAGR | `r funds[funds$Ticker=="VFINX",]$CAGR` | `r funds[funds$Ticker=="VFIAX",]$CAGR`
+
+SPY CAGR: `r spy.CAGR`
+
+
+```{r, echo=FALSE}
+# Plot Difference in Adjusted Price based on Expense Ratio
+plot(Ad(SPY), main="S&P 500 vs. VFIAX, VFINX",ylab="Adjusted Price")
+lines(Ad(fundData$VFIAX),col="blue")
+lines(Ad(fundData$VFINX),col="red")
+legend("bottomright",c("SPY","VFIAX","VFINX"),fill=c("black","blue","red"))
+```
+
+In sum, expenses add up over time. Admiral shares do not
+offer significant benefit over Investor shares even though the expenses are purported to be 1/3.
+This illustrates how even low expenses add drag to a portfolio.
 
 # Results
 

@@ -10,7 +10,7 @@ loadRData = function(filename) {
   load(filename)
   get(ls()[ls()!="filename"])
 }
-fromDate = "2010-11-13"
+fromDate = "2000-11-13"
 toDate   = "2016-11-13"
 funds    = read.csv("data/vanguard.csv",header = T, stringsAsFactors = F)
 # Load from previously cached download
@@ -66,5 +66,31 @@ abline(v=funds[funds$Ticker=="VFIAX",]$stdDev,col="blue")
 # Sharpe Ratio
 hist(funds$Sharpe,main="Sharpe Ratio (all funds)",xlab="")
 abline(v=funds[funds$Ticker=="VFIAX",]$Sharpe,col="blue")
+#
+# Compare claimed Expense Ratios vs. Actual Expense Ratios
+#
+getSymbols("SPY", src="yahoo", from=as.Date(fromDate),to=toDate,adjust=T)
+p0 = as.numeric(Ad(SPY[1]))
+p1 = as.numeric(Ad(last(SPY[])))
+tot = (p1 - p0)/p0
+
+# Compound expenses over an expected 16 year period
+expectedVFIAX = round((1.0005 ^ 16 - 1) * 100, 2)
+expectedVFINX = round((1.0015 ^ 16 - 1) * 100, 2)
+# Determine the percentage difference in total return 
+spyOverVFIAX = (tot - funds[funds$Ticker=="VFIAX",]$totalRet)/ funds[funds$Ticker=="VFIAX",]$totalRet
+spyOverVFINX = (tot - funds[funds$Ticker=="VFINX",]$totalRet)/ funds[funds$Ticker=="VFINX",]$totalRet
+pctOverVFIAX = round(spyOverVFIAX / expectedVFIAX * 100,1)
+pctOverVFINX = round(spyOverVFINX / expectedVFINX * 100,1)
+
+years =  as.numeric((as.Date(funds[funds$Ticker=="VFIAX",]$endDate)) -
+                     as.Date(funds[funds$Ticker=="VFIAX",]$startDate  ))/365
+spy.CAGR =  (p1 / p0)^(1/years)  - 1
+
+# Plot Difference in Adjusted Price based on Expense Ratio
+plot(Ad(SPY), main="S&P 500 vs. VFIAX, VFINX",ylab="Adjusted Price")
+lines(Ad(fundData$VFIAX),col="blue")
+lines(Ad(fundData$VFINX),col="red")
+legend("bottomright",c("SPY","VFIAX","VFINX"),fill=c("black","blue","red"))
 ## 
 ## 
