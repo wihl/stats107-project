@@ -158,6 +158,8 @@ kable(head(funds[order(funds$CAGR),colsToDisplay],n=3), caption="Worst CAGR",
 
 VMMSX is particularly bad: high expenses, low returns and low Sharpe Ratio.
 
+## Evaluation of VFIAX
+
 The following histograms show the distribution of all funds. VFIAX is the blue line.
 
 ```{r, echo=FALSE, fig.height=9.5}
@@ -187,7 +189,7 @@ abline(v=funds[funds$Ticker=="VFIAX",]$Sharpe,col="blue")
 Based on these summary statistics and distributions, it appears that there are better
 mutual fund choices available than VFIAX, albeit at slightly higher risk for higher reward.
 
-## Expense Ratios
+## Expenses
 
 Every mutual fund has expense ratios which is the principle way that a 
 company like Vanguard makes money. An expense ratio is a mutual fund's 
@@ -202,7 +204,8 @@ For VFIAX, Vanguard claims a 0.05% expense ratio. These are
 considered "admiral" class shares. For smaller investors, there
 are "investor" class shares (VFINX) with a 0.16% expense ratio. 
 This expense has gone
-down over time. We shall now examine if this matches reality
+down over time and will likely continue to do so. 
+We shall now examine if this matches reality
 and how returns deviate from the benchmark S&P 500.
 
 ```{r, echo=FALSE, warning=FALSE,message=FALSE, results="hide"}
@@ -259,7 +262,7 @@ precise, there are less than 2 basis points separating their CAGR.  For a very s
 From the previous section, we have established that VFIAX:
 
 * represents the S&P 500 market without significant overhead
-* it seems possible to do better
+* may not be an optimal choice. We should be able to do better.
 
 We will now iterate through a number of trading strategies to determine which
 trading models can best achieve this potential.
@@ -269,6 +272,8 @@ trading models can best achieve this potential.
 ## Pick Another Fund
 
 ## Diversified Static Set of Funds
+
+## Minimum Variance
 
 ## Sharpe Ratio / Efficient Frontier
 
@@ -282,7 +287,6 @@ trading models can best achieve this potential.
 
 ## Fama French Five Factor
 
-## Minimum Variance
 
 
 # Conclusions and Discussions
