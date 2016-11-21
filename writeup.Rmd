@@ -4,13 +4,19 @@ subtitle: "Stats 107 Final Project"
 author: "David Wihl"
 date: "December 6, 2016"
 abstract: |
-  Ten years ago, Warren Buffett made a famous : the ultimate passive investment, the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined by a team of hedge fund experts. Whoever had a lower return after ten years would donate $1 million to the charity of choice of the winner. After eight years, it looks increasingly likely that Buffett will win the bet.
-output: pdf_document
+  \textbf{Type: Simulating a trading strategy.}
+  Ten years ago, Warren Buffett made a famous bet : the ultimate passive investment, 
+  the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined
+  by a team of hedge fund experts. Whoever had a lower return after ten years 
+  would donate $1 million to the charity of choice of the winner. After eight years, 
+  it looks increasingly likely that Buffett will win the bet.
+output: 
+  pdf_document:
+    toc: true
+    number_sections: true
+    fig_crop: false
 linkcolor: blue
 ---
-\begin{center}
-\textbf{Type: Simulating a trading strategy.}
-\end{center}
 
 ```{r, echo=FALSE, message=FALSE,warning=FALSE}
 # Load libraries
@@ -21,16 +27,45 @@ library(knitr)
 
 # Introduction
 
+Can a basket of funds beat the market in long term?
 
-TODO
+Our project aims to create a Mutual Fund selector for semi-passive investor. 
+A typical Vanguard customer may have to choose from over one hundred mutual funds
+without any guidance. We will create a portfolio to maximize returns over the 
+long term using several common trading strategies, such as maximizing the
+Sharpe ratio. In order to make this more realistic, we will take into account 
+fees and transaction costs. Since this is aimed at a typical Vanguard retail customer, no shorting will be allowed. 
 
-# Methods
+We will not account for taxes on the assumption that the funds are in a tax deferred account such as 401(k) or
+IRA. For this reason, we will not evaluate ETFs which are at a disadvantage in a tax deferred account.
 
+The portfolio will start with $100,000, which is the current average 401(k) balance 
+(\href{http://time.com/money/4357248/retirement-401k-vanguard-balance/}{source}).
+
+The overall time period will be evaluated whenever possible on a sixteen year history
+which is the maximum provided by Yahoo via `quantmod`.
+
+The baseline or benchmark will be investing this amount in VFIAX and leaving it 
+there for the duration. The first section examines VFIAX to determine if it is a valid
+proxy for market both in terms of similiar results and reasonable expenses. We will 
+also examine how VFIAX compares to other Vanguard mutual funds in terms of CAGR and Volatility
+in order to motivate several trading strategies.
+
+The starting fund in the basket will be
+VTHRX, which is one of the typical Vanguard Age-Adjusted balanced
+funds and a common default fund for many retirement plans.
+
+We will simulate whether rebalancing on a monthly, quarterly, semi-annual or annual basis is the best strategy.
+
+Time permitting, we will evaluate these trading strategies over six windows of ten years each for a
+more robust estimation of performance.
+
+# Baseline
 
 ## Importing List of Vanguard Mutual Funds
 
-From Vanguard, I obtain a list of the 168 currently offered mutual funds
-including expense ratio. I converted this into a CSV for easy import into
+From Vanguard, I obtained a list of the 168 currently offered mutual funds
+including published expense ratio. I converted this into a CSV for easy import into
 R.
 
 Once the list of funds was imported, I used `quantmod` to read in
@@ -38,9 +73,10 @@ historical daily adjusted data for the entire date range available
 from Yahoo. Since the earliest available date was November 13, 2000,
 I chose an even 16 year end period, ending November 13, 2016. While more
 data would have been preferable, I felt that this was a reasonable sample
-given it included two significant market corrections in 2001 and again 2009.
+given it included two significant market corrections in 2001 and again in 2009.
 
-Given the size of data (168 securities, 16 years of daily data) I cached the data locally to allow fast iteration on many models. See appendix for all code.
+Given the size of data (168 securities, 16 years of daily data), I cached the data
+locally to allow fast iteration on many models. See appendix for all code.
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -64,10 +100,11 @@ fundData = mget(funds$Ticker,stockDataEnv)
 
 Several simple descriptive statistics were created: Total Return, Average
 Daily Return, Standard Deviation / Risk, Sharpe Ratio and CAGR. The following
-two tables summarize the top mutual funds. 
+tables summarize the best and worst mutual funds. 
 
 Interestingly, in performing these summary statistics, I determined that
-`quantmod` does not use adjusted price to calculate returns. So, basically, it is
+`quantmod` does not use adjusted price to calculate returns. Without explicitly using adjusted pricing, the default
+calculation is
 wrong. I found this going through the quantmod sources and then confirmed
 it at http://stackoverflow.com/questions/34772616/r-function-periodreturn-not-computing-returns-using-adjusted-closing-prices  As an extra precaution, I adjusted values upon retrieving the data using `getSymbol`.
 
@@ -105,41 +142,50 @@ for (i in 1:nrow(funds)) {
 # Generate Tables of Top Performers
 #
 colsToDisplay = c("Ticker","Fund.Name","Expenses","CAGR","Sharpe")
-kable(head(funds[order(-funds$Sharpe),colsToDisplay]), caption="Best Sharpe Ratio",
+kable(head(funds[order(-funds$Sharpe),colsToDisplay],n=3), caption="Best Sharpe Ratio",
       row.names = F,digits=2)
 
-kable(head(funds[order(funds$Sharpe),colsToDisplay]), caption="Worst Sharpe Ratio",
-      row.names = F,digits=2)
+kable(head(funds[order(funds$Sharpe),colsToDisplay],n=3), caption="Worst Sharpe Ratio",
+      row.names = F,digits=2,n=3)
 
-kable(head(funds[order(-funds$CAGR),colsToDisplay]), caption="Best CAGR",
-      row.names = F,digits=2)
+kable(head(funds[order(-funds$CAGR),colsToDisplay],n=3), caption="Best CAGR",
+      row.names = F,digits=2,n=3)
 
-kable(head(funds[order(funds$CAGR),colsToDisplay]), caption="Worst CAGR",
-      row.names = F,digits=2)
+kable(head(funds[order(funds$CAGR),colsToDisplay],n=3), caption="Worst CAGR",
+      row.names = F,digits=2,n=3)
 
 ```
 
 VMMSX is particularly bad: high expenses, low returns and low Sharpe Ratio.
 
-```{r, echo=FALSE, fig.height=5}
+The following histograms show the distribution of all funds. VFIAX is the blue line.
+
+```{r, echo=FALSE, fig.height=9.5}
 #
 # Show histograms with base VFIAX case
 #
-#par(mfrow=c(3,1), mar=rep(2,2))
+par(mfrow=c(3,1))
 
 # CAGR
-hist(funds$CAGR,main="CAGR (all funds)",xlab="")
+#ggplot(funds, aes(x=CAGR)) +
+#    geom_histogram(binwidth=.5, colour="black", fill="white") +
+#    geom_vline(aes(xintercept=funds[funds$Ticker=="VFIAX",]$CAGR), 
+#               color="red", linetype="dashed", size=1)
+
+hist(funds$CAGR,main="CAGR (all funds)",xlab="",breaks=20)
 abline(v=funds[funds$Ticker=="VFIAX",]$CAGR,col="blue")
 
 # Standard Deviation
-hist(funds$stdDev,main="Standard Deviation (all funds)",xlab="")
+hist(funds$stdDev,main="Standard Deviation of Returns (all funds)",xlab="",breaks=20)
 abline(v=funds[funds$Ticker=="VFIAX",]$stdDev,col="blue")
 
 # Sharpe Ratio
-hist(funds$Sharpe,main="Sharpe Ratio (all funds)",xlab="")
+hist(funds$Sharpe,main="Sharpe Ratio (all funds)",xlab="",breaks=20)
 abline(v=funds[funds$Ticker=="VFIAX",]$Sharpe,col="blue")
 ```
 
+Based on these summary statistics and distributions, it appears that there are better
+mutual fund choices available than VFIAX, albeit at slightly higher risk for higher reward.
 
 ## Expense Ratios
 
@@ -159,7 +205,7 @@ This expense has gone
 down over time. We shall now examine if this matches reality
 and how returns deviate from the benchmark S&P 500.
 
-```{r, echo=FALSE, warning=FALSE,message=FALSE}
+```{r, echo=FALSE, warning=FALSE,message=FALSE, results="hide"}
 #
 # Compare claimed Expense Ratios vs. Actual Expense Ratios
 #
@@ -172,10 +218,10 @@ tot = (p1 - p0)/p0
 expectedVFIAX = round((1.0005 ^ 16 - 1) * 100, 2)
 expectedVFINX = round((1.0015 ^ 16 - 1) * 100, 2)
 # Determine the percentage difference in total return 
-spyOverVFIAX = (tot - funds[funds$Ticker=="VFIAX",]$totalRet)/ funds[funds$Ticker=="VFIAX",]$totalRet
-spyOverVFINX = (tot - funds[funds$Ticker=="VFINX",]$totalRet)/ funds[funds$Ticker=="VFINX",]$totalRet
-pctOverVFIAX = round(spyOverVFIAX / expectedVFIAX * 100,1)
-pctOverVFINX = round(spyOverVFINX / expectedVFINX * 100,1)
+spyOverVFIAX = round((tot - funds[funds$Ticker=="VFIAX",]$totalRet)/ funds[funds$Ticker=="VFIAX",]$totalRet*100,1)
+spyOverVFINX = round((tot - funds[funds$Ticker=="VFINX",]$totalRet)/ funds[funds$Ticker=="VFINX",]$totalRet*100,1)
+pctOverVFIAX = round((expectedVFIAX - spyOverVFIAX) / expectedVFIAX * 100,1)
+pctOverVFINX = round((expectedVFINX - spyOverVFINX) / expectedVFINX * 100,1)
 
 years =  as.numeric((as.Date(funds[funds$Ticker=="VFIAX",]$endDate)) -
                      as.Date(funds[funds$Ticker=="VFIAX",]$startDate  ))/365
@@ -183,17 +229,15 @@ spy.CAGR =  (p1 / p0)^(1/years)  - 1
 
 ```
 
-TODO: Fix expense ratio calculation
-
 Metric | VFINX (Investor) | VFIAX (Admiral)
 -------|------------------|-----------------
 Claimed Expense | 0.15% | 0.05%
-Cum. Exp. 16 Yrs | `r round(expectedVFINX*100,1)`% |  `r round(expectedVFIAX*100,1)`% 
-Actual Expense | `r spyOverVFINX` | `r spyOverVFIAX`
+Cum. Exp. 16 Yrs | `r round(expectedVFINX,1)`% |  `r round(expectedVFIAX,1)`% 
+Actual Expense | `r spyOverVFINX`% | `r spyOverVFIAX`%
 Difference | `r pctOverVFINX`% | `r pctOverVFIAX`%
-CAGR | `r funds[funds$Ticker=="VFINX",]$CAGR` | `r funds[funds$Ticker=="VFIAX",]$CAGR`
+CAGR | `r round(funds[funds$Ticker=="VFINX",]$CAGR*100,4)`% | `r round(funds[funds$Ticker=="VFIAX",]$CAGR*100,4)`%
 
-SPY CAGR: `r spy.CAGR`
+SPY CAGR: `r round(spy.CAGR*100,4)`%
 
 
 ```{r, echo=FALSE}
@@ -204,11 +248,42 @@ lines(Ad(fundData$VFINX),col="red")
 legend("bottomright",c("SPY","VFIAX","VFINX"),fill=c("black","blue","red"))
 ```
 
-In sum, expenses add up over time. Admiral shares do not
-offer significant benefit over Investor shares even though the expenses are purported to be 1/3.
-This illustrates how even low expenses add drag to a portfolio.
+By these calculations, expenses add up over time but are lower than advertised. Admiral shares do not
+offer significant benefit over Investor shares even though the expenses are purported to be 1/3. To be
+precise, there are less than 2 basis points separating their CAGR.  For a very small cost, typically
+1.5 basis points of CAGR for Admiral shares, Vanguard index funds offer significant convenience.
 
-# Results
+
+# Trading Methods
+
+From the previous section, we have established that VFIAX:
+
+* represents the S&P 500 market without significant overhead
+* it seems possible to do better
+
+We will now iterate through a number of trading strategies to determine which
+trading models can best achieve this potential.
+
+## Age Based Balanced Fund
+
+## Pick Another Fund
+
+## Diversified Static Set of Funds
+
+## Sharpe Ratio / Efficient Frontier
+
+## Pairs Trading
+
+## Moving Averages
+
+## Momentum Trading
+
+## Fama French Three Factor
+
+## Fama French Five Factor
+
+## Minimum Variance
+
 
 # Conclusions and Discussions
 
@@ -216,6 +291,11 @@ This illustrates how even low expenses add drag to a portfolio.
 
 This entire project code including source data can be found on GitHub ([https://github.com/wihl/stats107-project](https://github.com/wihl/stats107-project))
 
+List of Vanguard funds, including fees and transaction costs, supplied by Vanguard https://investor.vanguard.com/mutual-funds/list#/mutual-funds/asset-class/month-end-returns
+
+The Buffet Bet, http://longbets.org/362/
+
+Fortune, The Buffett Bet http://fortune.com/2016/05/11/warren-buffett-hedge-fund-bet/
 
 
 # Appendix A - Code

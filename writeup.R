@@ -44,33 +44,38 @@ for (i in 1:nrow(funds)) {
 # Generate Tables of Top Performers
 #
 colsToDisplay = c("Ticker","Fund.Name","Expenses","CAGR","Sharpe")
-kable(head(funds[order(-funds$Sharpe),colsToDisplay]), caption="Best Sharpe Ratio",
+kable(head(funds[order(-funds$Sharpe),colsToDisplay],n=3), caption="Best Sharpe Ratio",
       row.names = F,digits=2)
 
-kable(head(funds[order(funds$Sharpe),colsToDisplay]), caption="Worst Sharpe Ratio",
-      row.names = F,digits=2)
+kable(head(funds[order(funds$Sharpe),colsToDisplay],n=3), caption="Worst Sharpe Ratio",
+      row.names = F,digits=2,n=3)
 
-kable(head(funds[order(-funds$CAGR),colsToDisplay]), caption="Best CAGR",
-      row.names = F,digits=2)
+kable(head(funds[order(-funds$CAGR),colsToDisplay],n=3), caption="Best CAGR",
+      row.names = F,digits=2,n=3)
 
-kable(head(funds[order(funds$CAGR),colsToDisplay]), caption="Worst CAGR",
-      row.names = F,digits=2)
+kable(head(funds[order(funds$CAGR),colsToDisplay],n=3), caption="Worst CAGR",
+      row.names = F,digits=2,n=3)
 
 #
 # Show histograms with base VFIAX case
 #
-par(mfrow=c(3,1), par=rep(4,2))
+par(mfrow=c(3,1))
 
 # CAGR
-hist(funds$CAGR,main="CAGR (all funds)",xlab="")
+#ggplot(funds, aes(x=CAGR)) +
+#    geom_histogram(binwidth=.5, colour="black", fill="white") +
+#    geom_vline(aes(xintercept=funds[funds$Ticker=="VFIAX",]$CAGR), 
+#               color="red", linetype="dashed", size=1)
+
+hist(funds$CAGR,main="CAGR (all funds)",xlab="",breaks=20)
 abline(v=funds[funds$Ticker=="VFIAX",]$CAGR,col="blue")
 
 # Standard Deviation
-hist(funds$stdDev,main="Standard Deviation (all funds)",xlab="")
+hist(funds$stdDev,main="Standard Deviation of Returns (all funds)",xlab="",breaks=20)
 abline(v=funds[funds$Ticker=="VFIAX",]$stdDev,col="blue")
 
 # Sharpe Ratio
-hist(funds$Sharpe,main="Sharpe Ratio (all funds)",xlab="")
+hist(funds$Sharpe,main="Sharpe Ratio (all funds)",xlab="",breaks=20)
 abline(v=funds[funds$Ticker=="VFIAX",]$Sharpe,col="blue")
 #
 # Compare claimed Expense Ratios vs. Actual Expense Ratios
@@ -84,10 +89,10 @@ tot = (p1 - p0)/p0
 expectedVFIAX = round((1.0005 ^ 16 - 1) * 100, 2)
 expectedVFINX = round((1.0015 ^ 16 - 1) * 100, 2)
 # Determine the percentage difference in total return 
-spyOverVFIAX = (tot - funds[funds$Ticker=="VFIAX",]$totalRet)/ funds[funds$Ticker=="VFIAX",]$totalRet
-spyOverVFINX = (tot - funds[funds$Ticker=="VFINX",]$totalRet)/ funds[funds$Ticker=="VFINX",]$totalRet
-pctOverVFIAX = round(spyOverVFIAX / expectedVFIAX * 100,1)
-pctOverVFINX = round(spyOverVFINX / expectedVFINX * 100,1)
+spyOverVFIAX = round((tot - funds[funds$Ticker=="VFIAX",]$totalRet)/ funds[funds$Ticker=="VFIAX",]$totalRet*100,1)
+spyOverVFINX = round((tot - funds[funds$Ticker=="VFINX",]$totalRet)/ funds[funds$Ticker=="VFINX",]$totalRet*100,1)
+pctOverVFIAX = round((expectedVFIAX - spyOverVFIAX) / expectedVFIAX * 100,1)
+pctOverVFINX = round((expectedVFINX - spyOverVFINX) / expectedVFINX * 100,1)
 
 years =  as.numeric((as.Date(funds[funds$Ticker=="VFIAX",]$endDate)) -
                      as.Date(funds[funds$Ticker=="VFIAX",]$startDate  ))/365
