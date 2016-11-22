@@ -23,11 +23,15 @@ linkcolor: blue
 library(ggplot2)
 library(quantmod)
 library(knitr)
+
+percent <- function(x, digits = 2, format = "f", ...) {
+  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
+}
 ```
 
 # Introduction
 
-Can a basket of funds beat the market in long term?
+Can a basket of funds beat the market in the long term?
 
 Our project aims to create a Mutual Fund selector for semi-passive investor. 
 A typical Vanguard customer may have to choose from over one hundred mutual funds
@@ -64,18 +68,18 @@ more robust estimation of performance.
 
 ## Importing List of Vanguard Mutual Funds
 
-From Vanguard, I obtained a list of the 168 currently offered mutual funds
-including published expense ratio. I converted this into a CSV for easy import into
+A list was obtained of the 168 currently offered Vanguard mutual funds
+including published expense ratios. The list was converted into a CSV for easy import into
 R.
 
-Once the list of funds was imported, I used `quantmod` to read in
+Once the list of funds was imported,  `quantmod` was used to read in
 historical daily adjusted data for the entire date range available
 from Yahoo. Since the earliest available date was November 13, 2000,
-I chose an even 16 year end period, ending November 13, 2016. While more
-data would have been preferable, I felt that this was a reasonable sample
+ an even 16 year end period was chosen, ending November 13, 2016. While more
+data would have been preferable, it was felt that this was a reasonable sample
 given it included two significant market corrections in 2001 and again in 2009.
 
-Given the size of data (168 securities, 16 years of daily data), I cached the data
+Given the size of data (168 securities, 16 years of daily data), the data was cached
 locally to allow fast iteration on many models. See appendix for all code.
 
 
@@ -102,11 +106,10 @@ Several simple descriptive statistics were created: Total Return, Average
 Daily Return, Standard Deviation / Risk, Sharpe Ratio and CAGR. The following
 tables summarize the best and worst mutual funds. 
 
-Interestingly, in performing these summary statistics, I determined that
+Interestingly, in performing these summary statistics, it was determined that
 `quantmod` does not use adjusted price to calculate returns. Without explicitly using adjusted pricing, the default
 calculation is
-wrong. I found this going through the quantmod sources and then confirmed
-it at http://stackoverflow.com/questions/34772616/r-function-periodreturn-not-computing-returns-using-adjusted-closing-prices  As an extra precaution, I adjusted values upon retrieving the data using `getSymbol`.
+wrong.  The was first discovered by going through the quantmod sources and then confirming at http://stackoverflow.com/questions/34772616/r-function-periodreturn-not-computing-returns-using-adjusted-closing-prices  As an extra precaution, values were adjusted upon retrieval using `getSymbol`.
 
 
 
@@ -192,7 +195,7 @@ mutual fund choices available than VFIAX, albeit at slightly higher risk for hig
 ## Expenses
 
 Every mutual fund has expense ratios which is the principle way that a 
-company like Vanguard makes money. An expense ratio is a mutual fund's 
+company like Vanguard makes revenue. An expense ratio is a mutual fund's 
 annual operating expense, expressed as a percentage of the fund's average
 net assets. It's calculated annually and removed from the fund's earnings
 before they're distributed to investors, directly reducing investors'
@@ -246,8 +249,8 @@ SPY CAGR: `r round(spy.CAGR*100,4)`%
 ```{r, echo=FALSE}
 # Plot Difference in Adjusted Price based on Expense Ratio
 plot(Ad(SPY), main="S&P 500 vs. VFIAX, VFINX",ylab="Adjusted Price")
-lines(Ad(fundData$VFIAX),col="blue")
-lines(Ad(fundData$VFINX),col="red")
+lines(Ad(fundData$VFIAX),col="blue",lwd=1)
+lines(Ad(fundData$VFINX),col="red",lwd=.1)
 legend("bottomright",c("SPY","VFIAX","VFINX"),fill=c("black","blue","red"))
 ```
 
@@ -268,6 +271,41 @@ We will now iterate through a number of trading strategies to determine which
 trading models can best achieve this potential.
 
 ## Age Based Balanced Fund
+
+The default mutual fund for many Vanguard-based retirement plans is age adjusted 
+balanced fund, such as VTHRX. Since VTHRX is a newer fund, having started
+on `r as.Date(funds[funds$Ticker=="VTHRX",]$startDate)`, we will calculate VFIAX
+performance over the same time period.
+
+```{r, echo=F}
+# Since VTHRX is younger than VFIAX, recalculate CAGR on matching dates
+sDate = as.Date(funds[funds$Ticker=="VTHRX",]$startDate)
+startPrice = as.numeric(Ad(fundData$VFIAX[sDate]))
+endPrice = as.numeric(Ad(last(fundData$VFIAX[])))
+totRet = (endPrice - startPrice) / startPrice
+years = as.numeric((as.Date(funds[funds$Ticker=="VTHRX",]$endDate) -
+                           as.Date(funds[funds$Ticker=="VTHRX",]$startDate)))/365
+CAGR = ((endPrice / startPrice)^(1/years)) - 1
+f1 = as.numeric(Ad(fundData$VFIAX[paste0(sDate,"::"),])) / startPrice
+f2 = as.numeric(Ad(fundData$VTHRX)) / as.numeric(Ad(fundData$VTHRX[1]))
+```
+
+Metric | VFIAX  | VTHRX
+-------|------------------|-----------------
+Expense Ratio |  `r percent(funds[funds$Ticker=="VFIAX",]$Expenses/100)` |  `r percent(funds[funds$Ticker=="VTHRX",]$Expenses/100)`
+CAGR | `r percent(CAGR)` | `r percent(funds[funds$Ticker=="VFIAX",]$CAGR)` 
+
+Not looking so good: lower CAGR and higher expenses.
+
+```{r, echo=FALSE}
+plot(index(fundData$VTHRX),f1,type="l",main="VTHRX vs. VFIAX (Normalized)",xlab="",ylab="Adjusted Price",col="red")
+lines(index(fundData$VTHRX),f2,col="blue",lwd=1)
+abline(h=1)
+legend("bottomright",c("VFIAX","VTHRX"),fill=c("red","blue"))
+```
+
+The balanced fund slightly outperforms the market during downturns, but over a longer time period significantly
+underperforms the market.
 
 ## Pick Another Fund
 

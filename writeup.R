@@ -2,6 +2,10 @@
 library(ggplot2)
 library(quantmod)
 library(knitr)
+
+percent <- function(x, digits = 2, format = "f", ...) {
+  paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
+}
 #
 # Import List of Securities
 #
@@ -100,8 +104,22 @@ spy.CAGR =  (p1 / p0)^(1/years)  - 1
 
 # Plot Difference in Adjusted Price based on Expense Ratio
 plot(Ad(SPY), main="S&P 500 vs. VFIAX, VFINX",ylab="Adjusted Price")
-lines(Ad(fundData$VFIAX),col="blue")
-lines(Ad(fundData$VFINX),col="red")
+lines(Ad(fundData$VFIAX),col="blue",lwd=1)
+lines(Ad(fundData$VFINX),col="red",lwd=.1)
 legend("bottomright",c("SPY","VFIAX","VFINX"),fill=c("black","blue","red"))
+# Since VTHRX is younger than VFIAX, recalculate CAGR on matching dates
+sDate = as.Date(funds[funds$Ticker=="VTHRX",]$startDate)
+startPrice = as.numeric(Ad(fundData$VFIAX[sDate]))
+endPrice = as.numeric(Ad(last(fundData$VFIAX[])))
+totRet = (endPrice - startPrice) / startPrice
+years = as.numeric((as.Date(funds[funds$Ticker=="VTHRX",]$endDate) -
+                           as.Date(funds[funds$Ticker=="VTHRX",]$startDate)))/365
+CAGR = ((endPrice / startPrice)^(1/years)) - 1
+f1 = as.numeric(Ad(fundData$VFIAX[paste0(sDate,"::"),])) / startPrice
+f2 = as.numeric(Ad(fundData$VTHRX)) / as.numeric(Ad(fundData$VTHRX[1]))
+plot(index(fundData$VTHRX),f1,type="l",main="VTHRX vs. VFIAX (Normalized)",xlab="",ylab="Adjusted Price",col="red")
+lines(index(fundData$VTHRX),f2,col="blue",lwd=1)
+abline(h=1)
+legend("bottomright",c("VFIAX","VTHRX"),fill=c("red","blue"))
 ## 
 ## 
