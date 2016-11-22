@@ -278,6 +278,9 @@ on `r as.Date(funds[funds$Ticker=="VTHRX",]$startDate)`, we will calculate VFIAX
 performance over the same time period.
 
 ```{r, echo=F}
+#
+# Compare VFIAX to VTHRX over equivalent time periods.
+#
 # Since VTHRX is younger than VFIAX, recalculate CAGR on matching dates
 sDate = as.Date(funds[funds$Ticker=="VTHRX",]$startDate)
 startPrice = as.numeric(Ad(fundData$VFIAX[sDate]))
@@ -304,12 +307,74 @@ abline(h=1)
 legend("bottomright",c("VFIAX","VTHRX"),fill=c("red","blue"))
 ```
 
-The balanced fund slightly outperforms the market during downturns, but over a longer time period significantly
+The age adjusted balanced fund slightly outperforms the market during downturns, but over a longer time period significantly
 underperforms the market.
 
 ## Pick Another Fund
 
+From the selection of funds, is there a fund that outperforms the market by 20%, has been in existance
+at least 10 years and has lower volatility?
+
+```{r, echo=F}
+#
+# Find a better single fund that beats the market with higher CAGR and lower volatility
+#
+betterFunds = c("VFIAX")
+VFIAX.CAGR = funds[funds$Ticker=="VFIAX",]$CAGR
+VFIAX.stdDev = funds[funds$Ticker=="VFIAX",]$stdDev
+for (i in 1:nrow(funds)) {
+  if (funds$CAGR[i] > (1.2 * VFIAX.CAGR)) {
+    if (funds$stdDev[i] < VFIAX.stdDev) {
+      if (funds$startDate[i] < as.Date("2006-01-01")) {
+        #cat(funds$Ticker[i]," ",funds$Fund.Name[i],"\n")
+        betterFunds = c(betterFunds, funds$Ticker[i])
+      }
+    }
+  }
+}
+
+colsToDisplay = c("Ticker","Fund.Name","startDate","Expenses","CAGR","stdDev")
+bf = funds[funds$Ticker %in% betterFunds,colsToDisplay ]
+bf$startDate = as.Date(bf$startDate)
+```
+
+It turns out that there are `r nrow(bf)-1` out of `r nrow(funds)` that meet these criteria. Here are the top ten:
+
+```{r, echo=F}
+kable(rbind(head(bf[order(-bf$CAGR),],n=10), tail(bf[order(-bf$CAGR),],n=1)),
+        caption="Top 10 Overall better funds than VFIAX",
+      row.names = F,digits=3)
+
+```
+
+Let's plot a selection:
+
+```{r, echo=F}
+f1 = as.numeric(Ad(fundData$VFIAX)) / as.numeric(Ad(fundData$VFIAX[1]))
+f2 = as.numeric(Ad(fundData$VASVX)) / as.numeric(Ad(fundData$VASVX[1]))
+f3 = as.numeric(Ad(fundData$VGHCX)) / as.numeric(Ad(fundData$VGHCX[1]))
+f4 = as.numeric(Ad(fundData$VWESX)) / as.numeric(Ad(fundData$VWESX[1]))
+f5 = as.numeric(Ad(fundData$VHGEX)) / as.numeric(Ad(fundData$VHGEX[1]))
+
+plot(index(fundData$VFIAX),f2,type="l",main="VFIAX vs. Better Funds (Normalized)",xlab="",ylab="Adjusted Price",col="blue")
+lines(index(fundData$VFIAX),f1,col="black",lwd=0.5)
+lines(index(fundData$VFIAX),f3,col="red",lwd=0.5)
+lines(index(fundData$VFIAX),f4,col="green",lwd=0.5)
+lines(index(fundData$VFIAX),f5,col="orange",lwd=0.5)
+abline(h=1)
+legend("topleft",c("VFIAX","VASVX","VGHCX","VWESX","VHGEX"),fill=c("black","blue","red","green","orange"))
+```
+
+We've discovered that approximately 15% of funds consistently beat the market over a 16 year period across
+a large number of different asset classes: Health Care Sector, Consumer Staples Sector, even several bond funds.
+
+Should the entire portfolio be put into one of these such as VASVX? Even though the volatility is lower, this would not be wise. Let's
+now examine more complex strategies that involve diversification to see if risks can be lowered even further at minimal
+reduction in CAGR.
+
 ## Diversified Static Set of Funds
+
+<!--
 
 ## Minimum Variance
 
@@ -325,6 +390,7 @@ underperforms the market.
 
 ## Fama French Five Factor
 
+-->
 
 
 # Conclusions and Discussions

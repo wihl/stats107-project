@@ -107,6 +107,9 @@ plot(Ad(SPY), main="S&P 500 vs. VFIAX, VFINX",ylab="Adjusted Price")
 lines(Ad(fundData$VFIAX),col="blue",lwd=1)
 lines(Ad(fundData$VFINX),col="red",lwd=.1)
 legend("bottomright",c("SPY","VFIAX","VFINX"),fill=c("black","blue","red"))
+#
+# Compare VFIAX to VTHRX over equivalent time periods.
+#
 # Since VTHRX is younger than VFIAX, recalculate CAGR on matching dates
 sDate = as.Date(funds[funds$Ticker=="VTHRX",]$startDate)
 startPrice = as.numeric(Ad(fundData$VFIAX[sDate]))
@@ -121,5 +124,42 @@ plot(index(fundData$VTHRX),f1,type="l",main="VTHRX vs. VFIAX (Normalized)",xlab=
 lines(index(fundData$VTHRX),f2,col="blue",lwd=1)
 abline(h=1)
 legend("bottomright",c("VFIAX","VTHRX"),fill=c("red","blue"))
+#
+# Find a better single fund that beats the market with higher CAGR and lower volatility
+#
+betterFunds = c("VFIAX")
+VFIAX.CAGR = funds[funds$Ticker=="VFIAX",]$CAGR
+VFIAX.stdDev = funds[funds$Ticker=="VFIAX",]$stdDev
+for (i in 1:nrow(funds)) {
+  if (funds$CAGR[i] > (1.2 * VFIAX.CAGR)) {
+    if (funds$stdDev[i] < VFIAX.stdDev) {
+      if (funds$startDate[i] < as.Date("2006-01-01")) {
+        #cat(funds$Ticker[i]," ",funds$Fund.Name[i],"\n")
+        betterFunds = c(betterFunds, funds$Ticker[i])
+      }
+    }
+  }
+}
+
+colsToDisplay = c("Ticker","Fund.Name","startDate","Expenses","CAGR","stdDev")
+bf = funds[funds$Ticker %in% betterFunds,colsToDisplay ]
+bf$startDate = as.Date(bf$startDate)
+kable(rbind(head(bf[order(-bf$CAGR),],n=10), tail(bf[order(-bf$CAGR),],n=1)),
+        caption="Top 10 Overall better funds than VFIAX",
+      row.names = F,digits=3)
+
+f1 = as.numeric(Ad(fundData$VFIAX)) / as.numeric(Ad(fundData$VFIAX[1]))
+f2 = as.numeric(Ad(fundData$VASVX)) / as.numeric(Ad(fundData$VASVX[1]))
+f3 = as.numeric(Ad(fundData$VGHCX)) / as.numeric(Ad(fundData$VGHCX[1]))
+f4 = as.numeric(Ad(fundData$VWESX)) / as.numeric(Ad(fundData$VWESX[1]))
+f5 = as.numeric(Ad(fundData$VHGEX)) / as.numeric(Ad(fundData$VHGEX[1]))
+
+plot(index(fundData$VFIAX),f2,type="l",main="VFIAX vs. Better Funds (Normalized)",xlab="",ylab="Adjusted Price",col="blue")
+lines(index(fundData$VFIAX),f1,col="black",lwd=0.5)
+lines(index(fundData$VFIAX),f3,col="red",lwd=0.5)
+lines(index(fundData$VFIAX),f4,col="green",lwd=0.5)
+lines(index(fundData$VFIAX),f5,col="orange",lwd=0.5)
+abline(h=1)
+legend("topleft",c("VFIAX","VASVX","VGHCX","VWESX","VHGEX"),fill=c("black","blue","red","green","orange"))
 ## 
 ## 
