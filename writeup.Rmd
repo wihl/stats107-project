@@ -5,8 +5,8 @@ author: "David Wihl"
 date: "December 6, 2016"
 abstract: |
   \textbf{Type: Simulating a trading strategy.}
-  Ten years ago, Warren Buffett made a famous bet : the ultimate passive investment, 
-  the Vanguard S&P 500 Index Fund Admiral (VFIAX), vs. a basket of funds determined
+  Eight years ago, Warren Buffett made a famous bet: the ultimate passive investment, 
+  the Vanguard S&P 500 Index Admiral Mutual Fund (VFIAX), vs. a basket of funds determined
   by a team of hedge fund experts. Whoever had a lower return after ten years 
   would donate $1 million to the charity of choice of the winner. After eight years, 
   it looks increasingly likely that Buffett will win the bet.
@@ -172,11 +172,6 @@ The following histograms show the distribution of all funds. VFIAX is the blue l
 par(mfrow=c(3,1))
 
 # CAGR
-#ggplot(funds, aes(x=CAGR)) +
-#    geom_histogram(binwidth=.5, colour="black", fill="white") +
-#    geom_vline(aes(xintercept=funds[funds$Ticker=="VFIAX",]$CAGR), 
-#               color="red", linetype="dashed", size=1)
-
 hist(funds$CAGR,main="CAGR (all funds)",xlab="",breaks=20)
 abline(v=funds[funds$Ticker=="VFIAX",]$CAGR,col="blue")
 
@@ -190,7 +185,7 @@ abline(v=funds[funds$Ticker=="VFIAX",]$Sharpe,col="blue")
 ```
 
 Based on these summary statistics and distributions, it appears that there are better
-mutual fund choices available than VFIAX, albeit at slightly higher risk for higher reward.
+mutual fund choices than VFIAX as a combination of higher CAGR and lower volatility.
 
 ## Expenses
 
@@ -249,8 +244,8 @@ SPY CAGR: `r round(spy.CAGR*100,4)`%
 ```{r, echo=FALSE}
 # Plot Difference in Adjusted Price based on Expense Ratio
 plot(Ad(SPY), main="S&P 500 vs. VFIAX, VFINX",ylab="Adjusted Price")
-lines(Ad(fundData$VFIAX),col="blue",lwd=1)
 lines(Ad(fundData$VFINX),col="red",lwd=.1)
+lines(Ad(fundData$VFIAX),col="blue",lwd=.5)
 legend("bottomright",c("SPY","VFIAX","VFINX"),fill=c("black","blue","red"))
 ```
 
@@ -310,7 +305,7 @@ legend("bottomright",c("VFIAX","VTHRX"),fill=c("red","blue"))
 The age adjusted balanced fund slightly outperforms the market during downturns, but over a longer time period significantly
 underperforms the market.
 
-## Pick Another Fund
+## Better Single Fund
 
 From the selection of funds, is there a fund that outperforms the market by 20%, has been in existance
 at least 10 years and has lower volatility?
@@ -320,8 +315,8 @@ at least 10 years and has lower volatility?
 # Find a better single fund that beats the market with higher CAGR and lower volatility
 #
 betterFunds = c("VFIAX")
-VFIAX.CAGR = funds[funds$Ticker=="VFIAX",]$CAGR
-VFIAX.stdDev = funds[funds$Ticker=="VFIAX",]$stdDev
+VFIAX.CAGR = funds[funds$Ticker=="VFIAX","CAGR"]
+VFIAX.stdDev = funds[funds$Ticker=="VFIAX","stdDev"]
 for (i in 1:nrow(funds)) {
   if (funds$CAGR[i] > (1.2 * VFIAX.CAGR)) {
     if (funds$stdDev[i] < VFIAX.stdDev) {
@@ -334,7 +329,7 @@ for (i in 1:nrow(funds)) {
 }
 
 colsToDisplay = c("Ticker","Fund.Name","startDate","Expenses","CAGR","stdDev")
-bf = funds[funds$Ticker %in% betterFunds,colsToDisplay ]
+bf = funds[funds$Ticker %in% betterFunds,colsToDisplay]
 bf$startDate = as.Date(bf$startDate)
 ```
 
@@ -369,16 +364,73 @@ We've discovered that approximately 15% of funds consistently beat the market ov
 a large number of different asset classes: Health Care Sector, Consumer Staples Sector, even several bond funds.
 
 Should the entire portfolio be put into one of these such as VASVX? Even though the volatility is lower, this would not be wise. Let's
-now examine more complex strategies that involve diversification to see if risks can be lowered even further at minimal
-reduction in CAGR.
+now examine more complex strategies that involve diversification to see if risks can be lowered even further at while
+potentially increasing in CAGR.
 
 ## Diversified Static Set of Funds
 
-<!--
+Vanguard and many other consumer general advice experts recommend a diversified set of static funds. Using
+Vanguard supplied tools on their website, the following simulation was run using a mid-career individual
+saving for retirement:
+
+* Time to invest before withdrawl: $\geq$ 15 years
+* Money will be withdrawn: $\geq$ 15 years
+* Medium risk tolerance
+* Medium likelihood of selling riskier assets during market declines
+* Medium volatility
+* Current and future income sources will be somewhat stable (3 on a scale of 5)
+* $100,000 to invest
+
+The calculator came back with the following recommendations:
+
+Weight | Ticker
+-------|-------
+36% | VTSMX
+24% | VGTSX
+28% | VBMFX
+12% | VTIBX
+
+Unfortunatel VTIBX, the Total International Bond Index Fund Investor shares has only been available since
+June 2013. Using Morningstar, an equivalent was found that had a sixteen year history: GMHBX, 
+GMO Currency Hedged International Bond Fund Class III (GMO funds are unlikely to be available to a small
+investor so this is a best case scenario for Vanguard suggestions.)
+
+Let's see how this portfolio would do:
+
+```{r}
+#
+# Compare against a diversified set of funds recommended by Vanguard
+#
+suggestions = c("VTSMX","VGTSX","VBMFX","GMHBX")
+getSymbols("GMHBX", src="yahoo", from=as.Date(fromDate),to=toDate,adjust=T)
+weights = c(.36,.24,.28,.12)
+# Build covariance matrix
+returns = cbind(dailyReturn(fundData$VTSMX),dailyReturn(fundData$VGTSX),dailyReturn(fundData$VBMFX),dailyReturn(GMHBX))
+# delete one extra row from VBMFX
+returns = returns[index(returns) !='2001-11-22']
+names(returns) = suggestions
+cov.mat = cov(returns) * 252  # annualized
+risk.p = sqrt(weights %*% cov.mat %*% weights)
+# TODO - this is not working
+```
 
 ## Minimum Variance
 
-## Sharpe Ratio / Efficient Frontier
+The original Buffet Bet was the market vs. a hedge fund consisting of a basket of funds. In retrospect,
+it is not surprising that the market is beating the hedge fund. The primary purpose of the hedge fund
+is the eponymous hedging - that is reducing risk. Hedge funds outperform the market during downtimes
+but underperform over the long term. Their primary raison d'être is captial preservation. This strategy
+will be mimicked by selecting a minimum variance portfolio. The portfolio will be compared against 
+market downturn periods vs. long term.
+
+
+## CAPM / Sharpe Ratio / Efficient Frontier
+
+As highlighted earlier in this paper, there are funds such as VSIAX which offer CAGR three times the market
+albeit at higher risk (See Table 3). By using CAPM, a selection of funds will be made to maximize returns while minimizing risk.
+
+<!--
+
 
 ## Pairs Trading
 
@@ -392,12 +444,23 @@ reduction in CAGR.
 
 -->
 
+# Future Ideas
+
+This paper has illustrated several techniques to beating the market over the long term using
+well known trading techniques. It would be interesting to explore more complex novel techniques
+that apply modern Machine Learning methods. One area particularly worth exploring would be
+Reinforcement Learning which is well suited to problems such as maximizing returns while minimizing risks. 
+Furthermore, additional factors like restrictions on number of trades,
+and cost of trades are relatively easy to model.
 
 # Conclusions and Discussions
 
 # References
 
 This entire project code including source data can be found on GitHub ([https://github.com/wihl/stats107-project](https://github.com/wihl/stats107-project))
+
+Ang, Clifford S., _Analyzing Financial Data and Implementing Financial Models Using R_, Springer 2015,
+ISBN 978-3-319-14075-9 (eBook)
 
 List of Vanguard funds, including fees and transaction costs, supplied by Vanguard https://investor.vanguard.com/mutual-funds/list#/mutual-funds/asset-class/month-end-returns
 

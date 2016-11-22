@@ -66,11 +66,6 @@ kable(head(funds[order(funds$CAGR),colsToDisplay],n=3), caption="Worst CAGR",
 par(mfrow=c(3,1))
 
 # CAGR
-#ggplot(funds, aes(x=CAGR)) +
-#    geom_histogram(binwidth=.5, colour="black", fill="white") +
-#    geom_vline(aes(xintercept=funds[funds$Ticker=="VFIAX",]$CAGR), 
-#               color="red", linetype="dashed", size=1)
-
 hist(funds$CAGR,main="CAGR (all funds)",xlab="",breaks=20)
 abline(v=funds[funds$Ticker=="VFIAX",]$CAGR,col="blue")
 
@@ -104,8 +99,8 @@ spy.CAGR =  (p1 / p0)^(1/years)  - 1
 
 # Plot Difference in Adjusted Price based on Expense Ratio
 plot(Ad(SPY), main="S&P 500 vs. VFIAX, VFINX",ylab="Adjusted Price")
-lines(Ad(fundData$VFIAX),col="blue",lwd=1)
 lines(Ad(fundData$VFINX),col="red",lwd=.1)
+lines(Ad(fundData$VFIAX),col="blue",lwd=.5)
 legend("bottomright",c("SPY","VFIAX","VFINX"),fill=c("black","blue","red"))
 #
 # Compare VFIAX to VTHRX over equivalent time periods.
