@@ -6,6 +6,9 @@ library(knitr)
 percent <- function(x, digits = 2, format = "f", ...) {
   paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
 }
+fromDate = "2000-11-13"
+toDate   = "2016-11-13"
+startCash = 100000
 #
 # Import List of Securities
 #
@@ -14,8 +17,6 @@ loadRData = function(filename) {
   load(filename)
   get(ls()[ls()!="filename"])
 }
-fromDate = "2000-11-13"
-toDate   = "2016-11-13"
 funds    = read.csv("data/vanguard.csv",header = T, stringsAsFactors = F)
 # Load from previously cached download
 stockDataEnv= loadRData("data/stockData.RData")
@@ -30,9 +31,9 @@ for (i in 1:nrow(funds)) {
     # we have the stockdata; Calculate summary statistics
     funds$startDate[i] = as.Date(index(data[1]))
     funds$endDate[i] = as.Date(index(last(data[])))
-    startPrice = as.numeric(Ad(data[1]))
-    endPrice = as.numeric(Ad(last(data[])))
-    funds$totalRet[i] = (endPrice - startPrice) / startPrice
+    funds$startPrice[i] = as.numeric(Ad(data[1]))
+    funds$endPrice[i] = as.numeric(Ad(last(data[])))
+    funds$totalRet[i] = (funds$endPrice[i] - funds$startPrice[i]) / funds$startPrice[i]
     dailyRets = dailyReturn(Ad(data))
     funds$stdDev[i] = sd(dailyRets)
     funds$avgRet[i] = mean(dailyRets)
@@ -40,10 +41,18 @@ for (i in 1:nrow(funds)) {
     # CAGR
     years =  as.numeric((as.Date(funds$endDate[i]) -
                            as.Date(funds$startDate[i])))/365
-    funds$CAGR[i] = ((endPrice / startPrice)^(1/years)) - 1
+    funds$CAGR[i] = ((funds$endPrice[i] / funds$startPrice[i])^(1/years)) - 1
 
   }
 }
+# Store some VFIAX data in separate variables for convenience
+VFIAX.CAGR = funds[funds$Ticker=="VFIAX","CAGR"]
+VFIAX.stdDev = funds[funds$Ticker=="VFIAX","stdDev"]
+VFIAX.startPrice = funds[funds$Ticker=="VFIAX","startPrice"]
+VFIAX.endPrice = funds[funds$Ticker=="VFIAX","endPrice"]
+VFIAX.Sharpe = funds[funds$Ticker=="VFIAX","Sharpe"]
+VFIAX.totReturn =funds[funds$Ticker=="VFIAX","totalRet"]
+
 #
 # Generate Tables of Top Performers
 #
@@ -67,15 +76,15 @@ par(mfrow=c(3,1))
 
 # CAGR
 hist(funds$CAGR,main="CAGR (all funds)",xlab="",breaks=20)
-abline(v=funds[funds$Ticker=="VFIAX",]$CAGR,col="blue")
+abline(v=VFIAX.CAGR,col="blue")
 
 # Standard Deviation
 hist(funds$stdDev,main="Standard Deviation of Returns (all funds)",xlab="",breaks=20)
-abline(v=funds[funds$Ticker=="VFIAX",]$stdDev,col="blue")
+abline(v=VFIAX.stdDev,col="blue")
 
 # Sharpe Ratio
 hist(funds$Sharpe,main="Sharpe Ratio (all funds)",xlab="",breaks=20)
-abline(v=funds[funds$Ticker=="VFIAX",]$Sharpe,col="blue")
+abline(v=VFIAX.Sharpe,col="blue")
 #
 # Compare claimed Expense Ratios vs. Actual Expense Ratios
 #
@@ -123,8 +132,6 @@ legend("bottomright",c("VFIAX","VTHRX"),fill=c("red","blue"))
 # Find a better single fund that beats the market with higher CAGR and lower volatility
 #
 betterFunds = c("VFIAX")
-VFIAX.CAGR = funds[funds$Ticker=="VFIAX",]$CAGR
-VFIAX.stdDev = funds[funds$Ticker=="VFIAX",]$stdDev
 for (i in 1:nrow(funds)) {
   if (funds$CAGR[i] > (1.2 * VFIAX.CAGR)) {
     if (funds$stdDev[i] < VFIAX.stdDev) {
@@ -137,7 +144,7 @@ for (i in 1:nrow(funds)) {
 }
 
 colsToDisplay = c("Ticker","Fund.Name","startDate","Expenses","CAGR","stdDev")
-bf = funds[funds$Ticker %in% betterFunds,colsToDisplay ]
+bf = funds[funds$Ticker %in% betterFunds,colsToDisplay]
 bf$startDate = as.Date(bf$startDate)
 kable(rbind(head(bf[order(-bf$CAGR),],n=10), tail(bf[order(-bf$CAGR),],n=1)),
         caption="Top 10 Overall better funds than VFIAX",
@@ -156,5 +163,58 @@ lines(index(fundData$VFIAX),f4,col="green",lwd=0.5)
 lines(index(fundData$VFIAX),f5,col="orange",lwd=0.5)
 abline(h=1)
 legend("topleft",c("VFIAX","VASVX","VGHCX","VWESX","VHGEX"),fill=c("black","blue","red","green","orange"))
+#
+# Compare against a diversified set of funds recommended by Vanguard
+#
+suggestions = c("VTSMX","VGTSX","VBMFX","GMHBX")
+getSymbols("GMHBX", src="yahoo", from=as.Date(fromDate),to=toDate,adjust=T)
+weights = c(.36,.24,.28,.12)
+# Build covariance matrix
+returns = cbind(dailyReturn(fundData$VTSMX),dailyReturn(fundData$VGTSX),dailyReturn(fundData$VBMFX),dailyReturn(GMHBX))
+# delete one extra row from VBMFX
+returns = returns[index(returns) !='2001-11-22']
+fundData$VBMFX = fundData$VBMFX[index(fundData$VBMFX) != '2001-11-22']
+names(returns) = suggestions
+cov.mat = cov(returns)  # annualized
+risk.p = sqrt(t(weights) %*% cov.mat %*% weights)
+shares = rep(0,length(suggestions))
+startValue = rep(0,length(suggestions))
+endValue = rep(0,length(suggestions))
+CAGR = rep(0,length(suggestions))
+# Find total return on three known funds
+for (i in 1:length(suggestions)-1) {
+  startValue[i] = startCash * weights[i]
+  shares[i] = startValue[i] / funds[funds$Ticker==suggestions[i],"startPrice"]
+  endValue[i] = shares[i] * funds[funds$Ticker==suggestions[i],"endPrice"]
+}
+# special case for GMHBX
+startValue[4] = startCash * weights[4]
+shares[4] = startCash * weights[4] / as.numeric(Ad(first(GMHBX)))
+endValue[4] = shares[4] * Ad(last(GMHBX))
+years =  as.numeric((as.Date(funds[funds$Ticker=="VFIAX","endDate"]) -
+                           as.Date(funds[funds$Ticker=="VFIAX","startDate"])))/365
+for (i in 1:length(suggestions)) {
+  CAGR[i] = 100*(((endValue[i] / startValue[i])^(1/years)) - 1)
+}
+port = cbind(startValue, endValue,CAGR)
+port.CAGR = 100*((sum(endValue) / startCash)^(1/years) - 1)
+port = rbind(port, c(sum(startValue), sum(endValue), port.CAGR ))
+port = rbind(port, c(startCash,startCash * (1+VFIAX.totReturn), VFIAX.CAGR*100))
+rownames(port) = c(suggestions,"Total Portfolio","VFIAX")
+colnames(port) = c("Start Value","End Value","CAGR")
+kable(port, caption="Vanguard Recommended Portfolio Growth", digits=2)
+f1 = as.numeric(Ad(fundData$VFIAX)) / as.numeric(Ad(fundData$VFIAX[1]))
+f2 = as.numeric(Ad(fundData$VTSMX)) / as.numeric(Ad(fundData$VTSMX[1]))
+f3 = as.numeric(Ad(fundData$VGTSX)) / as.numeric(Ad(fundData$VGTSX[1]))
+f4 = as.numeric(Ad(fundData$VBMFX)) / as.numeric(Ad(fundData$VBMFX[1]))
+f5 = as.numeric(Ad(GMHBX)) / as.numeric(Ad(GMHBX[1]))
+
+plot(index(fundData$VFIAX),f2,type="l",main="VFIAX vs. Recommend Portfolio",xlab="",ylab="Adjusted Price",col="blue")
+lines(index(fundData$VFIAX),f1,col="black",lwd=0.5)
+lines(index(fundData$VFIAX),f3,col="red",lwd=0.5)
+lines(index(fundData$VFIAX),f4,col="green",lwd=0.5)
+lines(index(fundData$VFIAX),f5,col="orange",lwd=0.5)
+abline(h=1)
+legend("topleft",c("VFIAX","VTSMX","VGTSX","VBMFX","GMHBX"),fill=c("black","blue","red","green","orange"))
 ## 
 ## 
