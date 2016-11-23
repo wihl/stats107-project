@@ -220,13 +220,7 @@ f4 = port.prices[,3] / port.prices[1,3]
 f5 = port.prices[,4] / port.prices[1,4]
 f6 = rowSums(port.value) / startCash
 
-#f3 = as.numeric(Ad(fundData$VGTSX)) / as.numeric(Ad(fundData$VGTSX[1]))
-#f4 = as.numeric(Ad(fundData$VBMFX)) / as.numeric(Ad(fundData$VBMFX[1]))
-#f5 = as.numeric(Ad(GMHBX)) / as.numeric(Ad(GMHBX[1]))
-
-
-
-plot(index(fundData$VFIAX),f2,type="l",main="VFIAX vs. Recommend Portfolio",xlab="",ylab="Adjusted Price",col="blue")
+plot(index(fundData$VFIAX),f2,type="l",main="VFIAX vs. Recommend Portfolio (Normalized)",xlab="",ylab="Adjusted Price",col="blue")
 lines(index(fundData$VFIAX),f1,col="black",lwd=0.5)
 lines(index(fundData$VFIAX),f3,col="purple",lwd=0.5)
 lines(index(fundData$VFIAX),f4,col="green",lwd=0.5)
@@ -234,5 +228,20 @@ lines(index(fundData$VFIAX),f5,col="orange",lwd=0.5)
 lines(index(fundData$VFIAX),f6,col="red",lwd=2.0)
 abline(h=1)
 legend("topleft",c("VFIAX","VTSMX","VGTSX","VBMFX","GMHBX","Portfolio"),fill=c("black","blue","purple","green","orange","red"))
+source('zivot_code.R')
+#
+# Minimum Variance portfolio
+#
+# We are now going to use the Zivot code to also build the efficient frontier
+tickers = funds$Ticker
+# Build covariance matrix
+
+# TODO. Should we use Zivot? Is there a better way? How can we find optimal weights?
+#returns = cbind(dailyReturn(fundData$VTSMX),dailyReturn(fundData$VGTSX),dailyReturn(fundData$VBMFX),dailyReturn(GMHBX))
+#names(returns) = tickers
+#cov.mat = cov(returns)  
+#risk.p = sqrt(t(weights) %*% cov.mat %*% weights)
+
+
 ## 
 ## 
