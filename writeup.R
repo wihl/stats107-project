@@ -3,9 +3,14 @@ library(ggplot2)
 library(quantmod)
 library(knitr)
 
+# dot product
+"%.%" <- function(x,y) sum(x*y)
+# Calculate percent ready for display
 percent <- function(x, digits = 2, format = "f", ...) {
   paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
 }
+
+# Constants
 fromDate = "2000-11-13"
 toDate   = "2016-11-13"
 startCash = 100000
@@ -202,19 +207,32 @@ port = rbind(port, c(sum(startValue), sum(endValue), port.CAGR ))
 port = rbind(port, c(startCash,startCash * (1+VFIAX.totReturn), VFIAX.CAGR*100))
 rownames(port) = c(suggestions,"Total Portfolio","VFIAX")
 colnames(port) = c("Start Value","End Value","CAGR")
+port.prices = cbind(as.numeric(Ad(fundData$VTSMX)), as.numeric(Ad(fundData$VGTSX)),
+                    as.numeric(Ad(fundData$VBMFX)), as.numeric(Ad(GMHBX)))
+
+port.value = sweep(port.prices, MARGIN=2, shares,'*')
 kable(port, caption="Vanguard Recommended Portfolio Growth", digits=2)
+
 f1 = as.numeric(Ad(fundData$VFIAX)) / as.numeric(Ad(fundData$VFIAX[1]))
-f2 = as.numeric(Ad(fundData$VTSMX)) / as.numeric(Ad(fundData$VTSMX[1]))
-f3 = as.numeric(Ad(fundData$VGTSX)) / as.numeric(Ad(fundData$VGTSX[1]))
-f4 = as.numeric(Ad(fundData$VBMFX)) / as.numeric(Ad(fundData$VBMFX[1]))
-f5 = as.numeric(Ad(GMHBX)) / as.numeric(Ad(GMHBX[1]))
+f2 = port.prices[,1] / port.prices[1,1]
+f3 = port.prices[,2] / port.prices[1,2]
+f4 = port.prices[,3] / port.prices[1,3]
+f5 = port.prices[,4] / port.prices[1,4]
+f6 = rowSums(port.value) / startCash
+
+#f3 = as.numeric(Ad(fundData$VGTSX)) / as.numeric(Ad(fundData$VGTSX[1]))
+#f4 = as.numeric(Ad(fundData$VBMFX)) / as.numeric(Ad(fundData$VBMFX[1]))
+#f5 = as.numeric(Ad(GMHBX)) / as.numeric(Ad(GMHBX[1]))
+
+
 
 plot(index(fundData$VFIAX),f2,type="l",main="VFIAX vs. Recommend Portfolio",xlab="",ylab="Adjusted Price",col="blue")
 lines(index(fundData$VFIAX),f1,col="black",lwd=0.5)
-lines(index(fundData$VFIAX),f3,col="red",lwd=0.5)
+lines(index(fundData$VFIAX),f3,col="purple",lwd=0.5)
 lines(index(fundData$VFIAX),f4,col="green",lwd=0.5)
 lines(index(fundData$VFIAX),f5,col="orange",lwd=0.5)
+lines(index(fundData$VFIAX),f6,col="red",lwd=2.0)
 abline(h=1)
-legend("topleft",c("VFIAX","VTSMX","VGTSX","VBMFX","GMHBX"),fill=c("black","blue","red","green","orange"))
+legend("topleft",c("VFIAX","VTSMX","VGTSX","VBMFX","GMHBX","Portfolio"),fill=c("black","blue","purple","green","orange","red"))
 ## 
 ## 
