@@ -233,7 +233,18 @@ source('zivot_code.R')
 # Minimum Variance portfolio
 #
 # We are now going to use the Zivot code to also build the efficient frontier
-tickers = funds$Ticker
+returns = c()
+cov.mat = matrix(0,nrow=5, ncol=5)
+for (i in 1:5) { # nrow(funds)
+  for (j in 1:5) { 
+    r1 = eval(parse(
+        text = paste("fundData$", funds$Ticker[i], sep = "")))
+    
+    head(Ad(r1),n=2)
+    # determine covariance for each combination of tickers
+    # make sure dates are consistent
+  }
+}
 # Build covariance matrix
 
 # TODO. Should we use Zivot? Is there a better way? How can we find optimal weights?
