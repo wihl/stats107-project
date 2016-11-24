@@ -233,19 +233,29 @@ source('zivot_code.R')
 # Minimum Variance portfolio
 #
 # We are now going to use the Zivot code to also build the efficient frontier
-returns = c()
-cov.mat = matrix(0,nrow=5, ncol=5)
-for (i in 1:5) { # nrow(funds)
-  for (j in 1:5) { 
-    r1 = eval(parse(
-        text = paste("fundData$", funds$Ticker[i], sep = "")))
-    
-    head(Ad(r1),n=2)
-    # determine covariance for each combination of tickers
-    # make sure dates are consistent
-  }
-}
-# Build covariance matrix
+
+nFunds = nrow(funds)
+cov.mat = matrix(0,nrow=nFunds, ncol=nFunds)
+colnames(cov.mat) = funds$Ticker
+rownames(cov.mat) = funds$Ticker
+
+# We have to build the variance-covariance matrix manually rather than using
+# the cov() function because the date lengths are not the same.
+# This code is not efficient as each covariance is calculated twice. It still takes
+# less than a second to run.
+# for (i in 1:nFunds) { # nrow(funds)
+#   for (j in 1:nFunds) { 
+#     sDate = as.Date(max(funds$startDate[i],funds$startDate[j]))
+#     print(sDate)
+#     r.i = eval(parse(text = paste("fundData$", funds$Ticker[i], sep = "")))
+#     r.i = Ad(r.i[paste0(sDate,"::"),])
+#     cat (funds$Ticker[i],":",r.i[1,]," ", length(r.i),"\n")
+#     r.j = eval(parse(text = paste("fundData$", funds$Ticker[j], sep = "")))
+#     r.j = Ad(r.j[paste0(sDate,"::"),])
+#     cat (funds$Ticker[j],":", length(r.j),"\n")
+#     cov.mat[i,j] = cov(r.i,r.j)
+#   }
+# }
 
 # TODO. Should we use Zivot? Is there a better way? How can we find optimal weights?
 #returns = cbind(dailyReturn(fundData$VTSMX),dailyReturn(fundData$VGTSX),dailyReturn(fundData$VBMFX),dailyReturn(GMHBX))
