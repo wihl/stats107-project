@@ -26,6 +26,9 @@ funds    = read.csv("data/vanguard.csv",header = T, stringsAsFactors = F)
 # Load from previously cached download
 stockDataEnv= loadRData("data/stockData.RData")
 fundData = mget(funds$Ticker,stockDataEnv)
+# Clean some specific missing or extra values
+fundData$VBMFX = fundData$VBMFX[index(fundData$VBMFX) != '2001-11-22']
+
 #
 # Generate Summary Statistics
 #
@@ -178,7 +181,6 @@ weights = c(.36,.24,.28,.12)
 returns = cbind(dailyReturn(fundData$VTSMX),dailyReturn(fundData$VGTSX),dailyReturn(fundData$VBMFX),dailyReturn(GMHBX))
 # delete one extra row from VBMFX
 returns = returns[index(returns) !='2001-11-22']
-fundData$VBMFX = fundData$VBMFX[index(fundData$VBMFX) != '2001-11-22']
 names(returns) = suggestions
 cov.mat = cov(returns)  # annualized
 risk.p = sqrt(t(weights) %*% cov.mat %*% weights)
@@ -242,25 +244,25 @@ rownames(cov.mat) = funds$Ticker
 # We have to build the variance-covariance matrix manually rather than using
 # the cov() function because the date lengths are not the same.
 # This code is not efficient as each covariance is calculated twice. It still takes
-# less than a second to run.
-# for (i in 1:nFunds) { # nrow(funds)
-#   for (j in 1:nFunds) { 
-#     sDate = as.Date(max(funds$startDate[i],funds$startDate[j]))
-#     print(sDate)
-#     r.i = eval(parse(text = paste("fundData$", funds$Ticker[i], sep = "")))
-#     r.i = Ad(r.i[paste0(sDate,"::"),])
-#     cat (funds$Ticker[i],":",r.i[1,]," ", length(r.i),"\n")
-#     r.j = eval(parse(text = paste("fundData$", funds$Ticker[j], sep = "")))
-#     r.j = Ad(r.j[paste0(sDate,"::"),])
-#     cat (funds$Ticker[j],":", length(r.j),"\n")
-#     cov.mat[i,j] = cov(r.i,r.j)
-#   }
-# }
+# just a few seconds to run. 
+# TODO: move this into the caching R script
+for (i in 1:nFunds) { # nrow(funds)
+  for (j in 1:nFunds) {
+    # start with later date of either
+    sDate = as.Date(max(funds$startDate[i],funds$startDate[j]))
+    r.i = eval(parse(text = paste("fundData$", funds$Ticker[i], sep = "")))
+    r.i = Ad(r.i[paste0(sDate,"::"),])
+    r.j = eval(parse(text = paste("fundData$", funds$Ticker[j], sep = "")))
+    r.j = Ad(r.j[paste0(sDate,"::"),])
+    # http://r.789695.n4.nabble.com/Finding-the-correlation-coefficient-of-two-stocks-td3246992.html
+    m = merge(r.i,r.j)
+    cov.mat[i,j] = cov(m[,1],m[,2],use="pairwise.complete.obs")
+  }
+}
 
 # TODO. Should we use Zivot? Is there a better way? How can we find optimal weights?
 #returns = cbind(dailyReturn(fundData$VTSMX),dailyReturn(fundData$VGTSX),dailyReturn(fundData$VBMFX),dailyReturn(GMHBX))
 #names(returns) = tickers
-#cov.mat = cov(returns)  
 #risk.p = sqrt(t(weights) %*% cov.mat %*% weights)
 
 
