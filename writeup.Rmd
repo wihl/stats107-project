@@ -211,7 +211,7 @@ mutual fund choices than VFIAX as a combination of higher CAGR and lower volatil
 
 ## Expenses
 
-Every mutual fund has expense ratios which is the principle way that a 
+Every mutual fund has expense ratios which is the principal way that a 
 company like Vanguard makes revenue. An expense ratio is a mutual fund's 
 annual operating expense, expressed as a percentage of the fund's average
 net assets. It's calculated annually and removed from the fund's earnings
@@ -329,7 +329,7 @@ underperforms the market.
 
 ## Better Single Fund
 
-From the selection of funds, is there a fund that outperforms the market by 20%, has been in existance
+From the selection of funds, is there a fund that outperforms the market by 20%, has been in existence
 at least 10 years and has lower volatility?
 
 ```{r, echo=F}
