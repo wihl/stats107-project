@@ -517,9 +517,9 @@ for (i in 1:nFunds) { # nrow(funds)
     # start with later date of either
     sDate = as.Date(max(funds$startDate[i],funds$startDate[j]))
     r.i = eval(parse(text = paste("fundData$", funds$Ticker[i], sep = "")))
-    r.i = Ad(r.i[paste0(sDate,"::"),])
+    r.i = dailyReturn(Ad(r.i[paste0(sDate,"::"),]))
     r.j = eval(parse(text = paste("fundData$", funds$Ticker[j], sep = "")))
-    r.j = Ad(r.j[paste0(sDate,"::"),])
+    r.j = dailyReturn(Ad(r.j[paste0(sDate,"::"),]))
     # http://r.789695.n4.nabble.com/Finding-the-correlation-coefficient-of-two-stocks-td3246992.html
     m = merge(r.i,r.j)
     cov.mat[i,j] = cov(m[,1],m[,2],use="pairwise.complete.obs")
@@ -540,12 +540,24 @@ for (i in 1:nFunds) { # nrow(funds)
 returns = c()
 for (i in 1:nFunds) { # nrow(funds)
   r = eval(parse(text = paste("fundData$", funds$Ticker[i], sep = "")))
-  returns = cbind(returns, monthlyReturn(Ad(r)))
+  returns = cbind(returns, dailyReturn(Ad(r)))
 }
 colnames(returns) = funds$Ticker
 cov.mat2 = cov(returns,use="pairwise.complete.obs")
-cor.mat = cor(returns,use="pairwise.complete.obs")
+colnames(cov.mat2) = funds$Ticker
+rownames(cov.mat2) = funds$Ticker
 
+cor.mat = cor(returns,use="pairwise.complete.obs")
+colnames(cor.mat) = funds$Ticker
+rownames(cor.mat) = funds$Ticker
+```
+
+```{r}
+source('zivot_code.R')
+rk.free = 0.005
+er = funds$CAGR
+gmin.port = globalMin.portfolio(er,cov.mat) 
+summary(gmin.port, risk.free = rk.free)
 ```
 
 ## CAPM / Sharpe Ratio / Efficient Frontier
