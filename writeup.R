@@ -2,6 +2,10 @@
 library(ggplot2)
 library(quantmod)
 library(knitr)
+library(stockPortfolio) # Alternative to quantmod
+library(reshape2)
+library(quadprog) # Quadratic programming library
+
 
 # dot product
 "%.%" <- function(x,y) sum(x*y)
@@ -230,41 +234,170 @@ lines(index(fundData$VFIAX),f5,col="orange",lwd=0.5)
 lines(index(fundData$VFIAX),f6,col="red",lwd=2.0)
 abline(h=1)
 legend("topleft",c("VFIAX","VTSMX","VGTSX","VBMFX","GMHBX","Portfolio"),fill=c("black","blue","purple","green","orange","red"))
-source('zivot_code.R')
+
+ef.startdate = "2013-09-01"
+ef.enddate = "2016-09-01"
+
+ef.stocks <-c(
+  "VTSMX" = .36,
+  "VGTSX" = .24,
+  "VBMFX" = .28,
+  "GMHBX" = .12
+  )
+
+ef.stockReturns <- stockPortfolio::getReturns(names(ef.stocks), freq ="day",get="overlapOnly", start = ef.startdate,end = ef.enddate)
+
+
+eff.frontier <- function (returns, short="no", max.allocation=NULL,
+ risk.premium.up=.5, risk.increment=.005){
+ # return argument should be a m x n matrix with one column per security
+ # short argument is whether short-selling is allowed; default is no (short
+ # selling prohibited)max.allocation is the maximum % allowed for any one
+ # security (reduces concentration) risk.premium.up is the upper limit of the
+ # risk premium modeled (see for loop below) and risk.increment is the
+ # increment (by) value used in the for loop
+ 
+ covariance <- cov(returns)
+ print(covariance)
+ n <- ncol(covariance)
+ 
+ # Create initial Amat and bvec assuming only equality constraint
+ # (short-selling is allowed, no allocation constraints)
+ Amat <- matrix (1, nrow=n)
+ bvec <- 1
+ meq <- 1
+ 
+ # Then modify the Amat and bvec if short-selling is prohibited
+ if(short=="no"){
+ Amat <- cbind(1, diag(n))
+ bvec <- c(bvec, rep(0, n))
+ }
+ 
+ # And modify Amat and bvec if a max allocation (concentration) is specified
+ if(!is.null(max.allocation)){
+ if(max.allocation > 1 | max.allocation <0){
+ stop("max.allocation must be greater than 0 and less than 1")
+ }
+ if(max.allocation * n < 1){
+ stop("Need to set max.allocation higher; not enough assets to add to 1")
+ }
+ Amat <- cbind(Amat, -diag(n))
+ bvec <- c(bvec, rep(-max.allocation, n))
+ }
+ 
+ # Calculate the number of loops
+ loops <- risk.premium.up / risk.increment + 1
+ loop <- 1
+ 
+ # Initialize a matrix to contain allocation and statistics
+ # This is not necessary, but speeds up processing and uses less memory
+ eff <- matrix(nrow=loops, ncol=n+3)
+ # Now I need to give the matrix column names
+ colnames(eff) <- c(colnames(returns), "Std.Dev", "Exp.Return", "sharpe")
+ 
+ # Loop through the quadratic program solver
+ for (i in seq(from=0, to=risk.premium.up, by=risk.increment)){
+ dvec <- colMeans(returns) * i # This moves the solution along the EF
+ sol <- solve.QP(covariance, dvec=dvec, Amat=Amat, bvec=bvec, meq=meq)
+ eff[loop,"Std.Dev"] <- sqrt(sum(sol$solution*colSums((covariance*sol$solution))))
+ eff[loop,"Exp.Return"] <- as.numeric(sol$solution %*% colMeans(returns))
+ eff[loop,"sharpe"] <- eff[loop,"Exp.Return"] / eff[loop,"Std.Dev"]
+ eff[loop,1:n] <- sol$solution
+ loop <- loop+1
+ }
+ 
+ return(as.data.frame(eff))
+}
+ 
+# Run the eff.frontier function based on no short and 50% alloc. restrictions
+eff <- eff.frontier(returns=ef.stockReturns$R, short="no", max.allocation=.50,
+ risk.premium.up=1, risk.increment=.001)
+ 
+# Find the optimal portfolio
+eff.optimal.point <- eff[eff$sharpe==max(eff$sharpe),]
+eff.min.variance = eff[eff$Std.Dev==min(eff$Std.Dev),]
+
+# graph efficient frontier
+# Start with color scheme
+ealred <- "#7D110C"
+ealtan <- "#CDC4B6"
+eallighttan <- "#F7F6F0"
+ealdark <- "#423C30"
+ 
+ggplot(eff, aes(x=Std.Dev, y=Exp.Return)) + geom_point(alpha=.1, color=ealdark) +
+ geom_point(data=eff.optimal.point, aes(x=Std.Dev, y=Exp.Return, label=sharpe),
+ color=ealred, size=5) +
+ annotate(geom="text", x=eff.optimal.point$Std.Dev,
+ y=eff.optimal.point$Exp.Return,
+ label=paste("Risk: ",
+ round(eff.optimal.point$Std.Dev*100, digits=3),"\nReturn: ",
+ round(eff.optimal.point$Exp.Return*100, digits=4),"%\nSharpe: ",
+ round(eff.optimal.point$sharpe*100, digits=2), "%", sep=""),
+ hjust=0, vjust=1.2) +
+ ggtitle("Efficient Frontier\nof Optimal Vanguard Portfolio") +
+ labs(x="Risk (standard deviation of portfolio)", y="Return") +
+ theme(panel.background=element_rect(fill=eallighttan),
+ text=element_text(color=ealdark),
+ plot.title=element_text(size=24, color=ealred))
+## Minimum Variance
+# The original Buffet Bet was the market vs. a hedge fund consisting of a basket of funds. In retrospect,
+# it is not surprising that the market is beating the hedge fund. The primary purpose of the hedge fund
+# is the eponymous hedging - that is reducing risk. Hedge funds outperform the market during downtimes
+# but underperform over the long term. Their primary raison d'être is captial preservation. This strategy
+# will be mimicked by selecting a minimum variance portfolio. The portfolio will be compared against 
+# market downturn periods vs. long term.
+
+#source('zivot_code.R')
 #
 # Minimum Variance portfolio
 #
 # We are now going to use the Zivot code to also build the efficient frontier
-
-nFunds = nrow(funds)
-cov.mat = matrix(0,nrow=nFunds, ncol=nFunds)
-colnames(cov.mat) = funds$Ticker
-rownames(cov.mat) = funds$Ticker
-
-# We have to build the variance-covariance matrix manually rather than using
-# the cov() function because the date lengths are not the same.
-# This code is not efficient as each covariance is calculated twice. It still takes
-# just a few seconds to run. 
-# TODO: move this into the caching R script
-for (i in 1:nFunds) { # nrow(funds)
-  for (j in 1:nFunds) {
-    # start with later date of either
-    sDate = as.Date(max(funds$startDate[i],funds$startDate[j]))
-    r.i = eval(parse(text = paste("fundData$", funds$Ticker[i], sep = "")))
-    r.i = Ad(r.i[paste0(sDate,"::"),])
-    r.j = eval(parse(text = paste("fundData$", funds$Ticker[j], sep = "")))
-    r.j = Ad(r.j[paste0(sDate,"::"),])
-    # http://r.789695.n4.nabble.com/Finding-the-correlation-coefficient-of-two-stocks-td3246992.html
-    m = merge(r.i,r.j)
-    cov.mat[i,j] = cov(m[,1],m[,2],use="pairwise.complete.obs")
-  }
-}
-
+# 
+# nFunds = nrow(funds)
+# cov.mat = matrix(0,nrow=nFunds, ncol=nFunds)
+# colnames(cov.mat) = funds$Ticker
+# rownames(cov.mat) = funds$Ticker
+# 
+# # We have to build the variance-covariance matrix manually rather than using
+# # the cov() function because the date lengths are not the same.
+# # This code is not efficient as each covariance is calculated twice. It still takes
+# # just a few seconds to run. 
+# # TODO: move this into the caching R script
+# for (i in 1:nFunds) { # nrow(funds)
+#   for (j in 1:nFunds) {
+#     # start with later date of either
+#     sDate = as.Date(max(funds$startDate[i],funds$startDate[j]))
+#     r.i = eval(parse(text = paste("fundData$", funds$Ticker[i], sep = "")))
+#     r.i = dailyReturn(Ad(r.i[paste0(sDate,"::"),]))
+#     r.j = eval(parse(text = paste("fundData$", funds$Ticker[j], sep = "")))
+#     r.j = dailyReturn(Ad(r.j[paste0(sDate,"::"),]))
+#     # http://r.789695.n4.nabble.com/Finding-the-correlation-coefficient-of-two-stocks-td3246992.html
+#     m = merge(r.i,r.j)
+#     cov.mat[i,j] = cov(m[,1],m[,2],use="pairwise.complete.obs")
+#   }
+# }
+# 
 # TODO. Should we use Zivot? Is there a better way? How can we find optimal weights?
 #returns = cbind(dailyReturn(fundData$VTSMX),dailyReturn(fundData$VGTSX),dailyReturn(fundData$VBMFX),dailyReturn(GMHBX))
 #names(returns) = tickers
 #risk.p = sqrt(t(weights) %*% cov.mat %*% weights)
-
-
+# returns = c()
+# for (i in 1:nFunds) { # nrow(funds)
+#   r = eval(parse(text = paste("fundData$", funds$Ticker[i], sep = "")))
+#   returns = cbind(returns, dailyReturn(Ad(r)))
+# }
+# colnames(returns) = funds$Ticker
+# cov.mat2 = cov(returns,use="pairwise.complete.obs")
+# colnames(cov.mat2) = funds$Ticker
+# rownames(cov.mat2) = funds$Ticker
+# 
+# cor.mat = cor(returns,use="pairwise.complete.obs")
+# colnames(cor.mat) = funds$Ticker
+# rownames(cor.mat) = funds$Ticker
+# source('zivot_code.R')
+# rk.free = 0.005
+# er = funds$CAGR
+# gmin.port = globalMin.portfolio(er,cov.mat) 
+# summary(gmin.port, risk.free = rk.free)
 ## 
 ## 
