@@ -467,10 +467,10 @@ kable(port, caption="Vanguard Recommended Portfolio Growth", digits=2)
 
 ```
 
-The recommended portfolio provide effectively the same returns as the market, albeit at
+The recommended portfolio provides effectively the same returns as the market, albeit at
 lower volatility. Note from the plot below that the portfolio had a better 
 return than the market for the majority
-of the period.
+of the period, but the market value did eventually catch up.
 
 ```{r, echo=FALSE}
 f1 = as.numeric(Ad(fundData$VFIAX)) / as.numeric(Ad(fundData$VFIAX[1]))
@@ -627,7 +627,6 @@ ggplot(eff, aes(x=Std.Dev, y=Exp.Return)) + geom_point(alpha=.1, color=ealdark) 
 
 
 
-
 ```{r, echo=FALSE}
 ## Minimum Variance
 # The original Buffet Bet was the market vs. a hedge fund consisting of a basket of funds. In retrospect,
@@ -691,32 +690,172 @@ ggplot(eff, aes(x=Std.Dev, y=Exp.Return)) + geom_point(alpha=.1, color=ealdark) 
 # summary(gmin.port, risk.free = rk.free)
 ```
 
-## CAPM / Sharpe Ratio / Efficient Frontier
+## Portfolio Based on Efficient Frontier
 
-As highlighted earlier in this paper, there are funds such as VSIAX which offer CAGR three times the market
-albeit at higher risk (See Table 3). By using CAPM, a selection of funds will be made to maximize returns while minimizing risk.
+For the final trading strategy, we will combine the best funds (determined by Sharpe Ratio) found in Section 3.2 - Better Funds
+into a portfolio using the Efficient Frontier.  Again, we are limiting a fund to a maximum of 50% of the portfolio. The efficient frontier
+is calculated on the period Sept 1, 2013-Sept 1, 2016. To avoid overfitting, we then backtest starting from Jan 30, 2004 which is the earliest date available for all funds in the selected portfolio. By testing on a longer period than used to build the model, we can see if our 
+assumptions generalize well over time.
 
-<!--
+```{r, echo=FALSE,results="hide"}
+colsToDisplay = c("Ticker","Fund.Name","startDate","Expenses","CAGR","stdDev","Sharpe")
+bf = funds[funds$Ticker %in% betterFunds,colsToDisplay]
+# Take the top ten, sorted by Sharpe Ratio
+bf = head(bf[order(-bf$Sharpe),],n=10)
+bf$startDate = as.Date(bf$startDate)
+
+ef.startdate = "2013-09-01"
+ef.enddate = "2016-09-01"
+
+# Setup for stockPortfolio::getReturns, assumimg each fund starts at 10% of the portfolio
+ef.stocks = as.data.frame(t(rep(0.1,10)))
+colnames(ef.stocks) = bf$Ticker
+
+ef.stockReturns <- stockPortfolio::getReturns(names(ef.stocks), freq ="day",get="overlapOnly", start = ef.startdate,end = ef.enddate)
+
+ 
+# Run the eff.frontier function based on no short and 50% alloc. restrictions
+eff <- eff.frontier(returns=ef.stockReturns$R, short="no", max.allocation=.50,
+ risk.premium.up=1, risk.increment=.001)
+ 
+# Find the optimal portfolio
+eff.optimal.point <- eff[eff$sharpe==max(eff$sharpe),]
+
+# Show the resulting stocks and weights
+bf = eff.optimal.point[,1:10] # the first ten columns are the funds
+# Select only funds where the weight > 1% and transpose it
+bf = t(bf[,bf[,]>0.01])
+colnames(bf) = "Weight"
+```
+
+The resulting portfolio is:
+```{r, echo=FALSE}
+kable(bf, caption="Best Vanguard Portfolio", digits=2)
+```
+
+```{r,echo=FALSE,results="hide"}
+# graph efficient frontier
+# Start with color scheme
+ealred <- "#7D110C"
+ealtan <- "#CDC4B6"
+eallighttan <- "#F7F6F0"
+ealdark <- "#423C30"
+ 
+ggplot(eff, aes(x=Std.Dev, y=Exp.Return)) + geom_point(alpha=.1, color=ealdark) +
+ geom_point(data=eff.optimal.point, aes(x=Std.Dev, y=Exp.Return, label=sharpe),
+ color=ealred, size=5) +
+ annotate(geom="text", x=eff.optimal.point$Std.Dev,
+ y=eff.optimal.point$Exp.Return,
+ label=paste("Risk: ",
+ round(eff.optimal.point$Std.Dev*100, digits=3),"\nReturn: ",
+ round(eff.optimal.point$Exp.Return*100, digits=4),"%\nSharpe: ",
+ round(eff.optimal.point$sharpe*100, digits=2), "%", sep=""),
+ hjust=0, vjust=1.2) +
+ ggtitle("Efficient Frontier\nof Best Vanguard Funds") +
+ labs(x="Risk (standard deviation of portfolio)", y="Return") +
+ theme(panel.background=element_rect(fill=eallighttan),
+ text=element_text(color=ealdark),
+ plot.title=element_text(size=24, color=ealred))
+```
+
+Using the three year model building period, we obtain very optimistic results:
+
+Metric | VFIAX | Best Portfolio
+-------|-------|---------------
+CAGR | `r percent(VFIAX.CAGR)` | `r round((eff.optimal.point$Exp.Return+1)^365-1,4)*100`%
+Std. Dev | `r round(VFIAX.stdDev,4)` | `r round(eff.optimal.point$Std.Dev,4)`
+Sharpe Ratio | `r round(VFIAX.Sharpe,4)` | `r round(eff.optimal.point$sharpe,4)`
+
+However, when we attempt to extrapolate over a longer time period, reality sets in:
 
 
-## Pairs Trading
+```{r, echo=FALSE, warning=FALSE}
+suggestions = rownames(bf)
+weights = as.vector(bf)
+# Build covariance matrix
+returns = cbind(dailyReturn(fundData$VWEHX['2004-01-30::',]),
+                dailyReturn(fundData$VWIAX['2004-01-30::',]),
+                dailyReturn(fundData$VCSAX['2004-01-30::',]),
+                dailyReturn(fundData$VGHAX['2004-01-30::',]),
+                dailyReturn(fundData$VUSTX['2004-01-30::',]))
+startPrice = c(as.numeric(Ad(fundData$VWEHX['2004-01-30'])),
+             as.numeric(Ad(fundData$VWIAX['2004-01-30'])),
+             as.numeric(Ad(fundData$VCSAX['2004-01-30'])),
+             as.numeric(Ad(fundData$VGHAX['2004-01-30'])),
+             as.numeric(Ad(fundData$VUSTX['2004-01-30'])))
+names(returns) = suggestions
 
-## Moving Averages
+cov.mat = cov(returns)  # annualized
+shares = rep(0,length(suggestions))
+startValue = rep(0,length(suggestions))
+endValue = rep(0,length(suggestions))
+CAGR = rep(0,length(suggestions))
+# Find total return on three known funds
+for (i in 1:length(suggestions)) {
+  startValue[i] = startCash * weights[i]
+  shares[i] = startValue[i] / startPrice[i]
+  endValue[i] = shares[i] * funds[funds$Ticker==suggestions[i],"endPrice"]
+}
+years =  as.numeric((as.Date(funds[funds$Ticker=="VFIAX","endDate"]) -
+                           as.Date("2004-01-30")))/365
+for (i in 1:length(suggestions)) {
+  CAGR[i] = 100*(((endValue[i] / startValue[i])^(1/years)) - 1)
+}
+port = cbind(startValue, endValue,CAGR)
+port.CAGR = 100*((sum(endValue) / startCash)^(1/years) - 1)
+port = rbind(port, c(sum(startValue), sum(endValue), port.CAGR ))
 
-## Momentum Trading
+# Add a row for VFIAX for this time period
+ind = fundData$VFIAX['2004-01-30::',]
+ind.startPrice = as.numeric(Ad(ind[1]))
+ind.CAGR = ((VFIAX.endPrice / ind.startPrice)^(1/years)) - 1
+ind.endPrice = startCash / ind.startPrice * VFIAX.endPrice
+port = rbind(port, c(startCash, ind.endPrice, ind.CAGR*100))
+rownames(port) = c(suggestions,"Total Portfolio","VFIAX")
+colnames(port) = c("Start Value","End Value","CAGR")
+port.prices = cbind(as.numeric(Ad(fundData$VWEHX['2004-01-30::',])),
+                    as.numeric(Ad(fundData$VWIAX['2004-01-30::',])),
+                    as.numeric(Ad(fundData$VCSAX['2004-01-30::',])),
+                    as.numeric(Ad(fundData$VGHAX['2004-01-30::',])),
+                    as.numeric(Ad(fundData$VUSTX['2004-01-30::',])))
 
-## Fama French Three Factor
+port.value = sweep(port.prices, MARGIN=2, shares,'*')
+kable(port, caption="EF Portfolio Growth", digits=2)
 
-## Fama French Five Factor
+```
 
--->
+```{r, echo=FALSE}
+
+f1 = as.numeric(Ad(ind)) / as.numeric(Ad(ind[1]))
+f2 = port.prices[,1] / port.prices[1,1]
+f3 = port.prices[,2] / port.prices[1,2]
+f4 = port.prices[,3] / port.prices[1,3]
+f5 = port.prices[,4] / port.prices[1,4]
+f6 = port.prices[,5] / port.prices[1,5]
+f7 = rowSums(port.value) / startCash
+
+plot(index(ind),f2,type="l",main="VFIAX vs. Best EF Portfolio (Normalized)",xlab="",ylab="Adjusted Price",col="blue", ylim=(c(0.5,4)))
+lines(index(ind),f1,col="black",lwd=0.5)
+lines(index(ind),f3,col="purple",lwd=0.5)
+lines(index(ind),f4,col="green",lwd=0.5)
+lines(index(ind),f5,col="orange",lwd=0.5)
+lines(index(ind),f6,col="gold",lwd=0.5)
+lines(index(ind),f7,col="red",lwd=2.0)
+abline(h=1)
+legend("topleft",c("VFIAX","VWEHX","VWIAX","VCSAX","VGHAX","VUSTX","Portfolio"),fill=c("black","blue","purple","green","orange","gold","red"))
+```
+
+This plot looks similiar to the Vanguard suggested portfolio plot in Section 3.3. It is ahead of the benchmark
+VFIAX for the majority of the duration, but eventually the market does catch up. Buffet may have been
+correct all along, as least compared to the Efficient Frontier!
 
 # Future Ideas
 
-This paper has illustrated several techniques to beating the market over the long term using
-well known trading techniques. It would be interesting to explore more complex novel techniques
+This paper has illustrated several techniques to attempting to beat the market over the long term. 
+It would be interesting to explore more complex novel techniques
 that apply modern Machine Learning methods. One area particularly worth exploring would be
-Reinforcement Learning which is well suited to problems such as maximizing returns while minimizing risks. 
+Reinforcement Learning which is well suited to problems such as maximizing returns while minimizing risks
+while continuing to actively learn from results. 
 Furthermore, additional factors like restrictions on number of trades,
 and cost of trades are relatively easy to model.
 
@@ -729,17 +868,40 @@ Alternative | Result | Comment
 Age Balanced | Loser | Lower CAGR, higher expenses
 Single Alternative Fund | Winner | Higher return, but possibly higher risk
 Vanguard Static | Winner | Same return, significantly lower risk
-Vanguard EF | Winner | Double return, significantly lower risk, likely overfit
+Vanguard EF | Winner | Double return, significantly lower risk, *likely overfit*
+Best EF from fund selection | Loser | Fails when tested over longer period.
 
 This illustrates that there are a number of different techniques of besting the market
 over the long term, either in terms of higher returns, lower risk or both.
 
+However, these results are suspect as they are likely prone to overfitting. In two cases,
+the portfolios were ahead of the market for the majority of the duration only
+for the market to eventually catch up.
+
+This illustrates several key aspects. Over longer periods of time, there is a regression
+to the mean of the market. Any backtesting trading strategy may be prone to overfitting,
+so careful techniques of data science need to be applied, such testing over longer
+periods of time than used for model building, using sliding windows or using multiple
+metrics to determine risk. 
+While it may be difficult to beat the market, it is likely possible to at least match
+market returns while maintaining lower risk. Finally, any trading strategy
+needs regular tuning, adjustment or rebalancing as the model assumptions used in the
+initial portfolio creation are not likely to remain true over longer periods of time.
+
+
+
 # References
 
-This entire project code including source data can be found on GitHub ([https://github.com/wihl/stats107-project](https://github.com/wihl/stats107-project))
+## Books
 
 Ang, Clifford S., _Analyzing Financial Data and Implementing Financial Models Using R_, Springer 2015,
 ISBN 978-3-319-14075-9 (eBook)
+
+Daroóczi, G., Puhle, M., et al. _Introduction to R for Quantiative Finance_, Packt Publishing, 2013, ISBN 978-1-78328-093-3
+
+## Internet References
+
+This entire project code including source data can be found on GitHub ([https://github.com/wihl/stats107-project](https://github.com/wihl/stats107-project))
 
 List of Vanguard funds, including fees and transaction costs, supplied by Vanguard https://investor.vanguard.com/mutual-funds/list#/mutual-funds/asset-class/month-end-returns
 

@@ -399,5 +399,126 @@ ggplot(eff, aes(x=Std.Dev, y=Exp.Return)) + geom_point(alpha=.1, color=ealdark) 
 # er = funds$CAGR
 # gmin.port = globalMin.portfolio(er,cov.mat) 
 # summary(gmin.port, risk.free = rk.free)
+colsToDisplay = c("Ticker","Fund.Name","startDate","Expenses","CAGR","stdDev","Sharpe")
+bf = funds[funds$Ticker %in% betterFunds,colsToDisplay]
+# Take the top ten, sorted by Sharpe Ratio
+bf = head(bf[order(-bf$Sharpe),],n=10)
+bf$startDate = as.Date(bf$startDate)
+
+ef.startdate = "2013-09-01"
+ef.enddate = "2016-09-01"
+
+# Setup for stockPortfolio::getReturns, assumimg each fund starts at 10% of the portfolio
+ef.stocks = as.data.frame(t(rep(0.1,10)))
+colnames(ef.stocks) = bf$Ticker
+
+ef.stockReturns <- stockPortfolio::getReturns(names(ef.stocks), freq ="day",get="overlapOnly", start = ef.startdate,end = ef.enddate)
+
+ 
+# Run the eff.frontier function based on no short and 50% alloc. restrictions
+eff <- eff.frontier(returns=ef.stockReturns$R, short="no", max.allocation=.50,
+ risk.premium.up=1, risk.increment=.001)
+ 
+# Find the optimal portfolio
+eff.optimal.point <- eff[eff$sharpe==max(eff$sharpe),]
+
+# Show the resulting stocks and weights
+bf = eff.optimal.point[,1:10] # the first ten columns are the funds
+# Select only funds where the weight > 1% and transpose it
+bf = t(bf[,bf[,]>0.01])
+colnames(bf) = "Weight"
+kable(bf, caption="Best Vanguard Portfolio", digits=2)
+# graph efficient frontier
+# Start with color scheme
+ealred <- "#7D110C"
+ealtan <- "#CDC4B6"
+eallighttan <- "#F7F6F0"
+ealdark <- "#423C30"
+ 
+ggplot(eff, aes(x=Std.Dev, y=Exp.Return)) + geom_point(alpha=.1, color=ealdark) +
+ geom_point(data=eff.optimal.point, aes(x=Std.Dev, y=Exp.Return, label=sharpe),
+ color=ealred, size=5) +
+ annotate(geom="text", x=eff.optimal.point$Std.Dev,
+ y=eff.optimal.point$Exp.Return,
+ label=paste("Risk: ",
+ round(eff.optimal.point$Std.Dev*100, digits=3),"\nReturn: ",
+ round(eff.optimal.point$Exp.Return*100, digits=4),"%\nSharpe: ",
+ round(eff.optimal.point$sharpe*100, digits=2), "%", sep=""),
+ hjust=0, vjust=1.2) +
+ ggtitle("Efficient Frontier\nof Best Vanguard Funds") +
+ labs(x="Risk (standard deviation of portfolio)", y="Return") +
+ theme(panel.background=element_rect(fill=eallighttan),
+ text=element_text(color=ealdark),
+ plot.title=element_text(size=24, color=ealred))
+suggestions = rownames(bf)
+weights = as.vector(bf)
+# Build covariance matrix
+returns = cbind(dailyReturn(fundData$VWEHX['2004-01-30::',]),
+                dailyReturn(fundData$VWIAX['2004-01-30::',]),
+                dailyReturn(fundData$VCSAX['2004-01-30::',]),
+                dailyReturn(fundData$VGHAX['2004-01-30::',]),
+                dailyReturn(fundData$VUSTX['2004-01-30::',]))
+startPrice = c(as.numeric(Ad(fundData$VWEHX['2004-01-30'])),
+             as.numeric(Ad(fundData$VWIAX['2004-01-30'])),
+             as.numeric(Ad(fundData$VCSAX['2004-01-30'])),
+             as.numeric(Ad(fundData$VGHAX['2004-01-30'])),
+             as.numeric(Ad(fundData$VUSTX['2004-01-30'])))
+names(returns) = suggestions
+
+cov.mat = cov(returns)  # annualized
+shares = rep(0,length(suggestions))
+startValue = rep(0,length(suggestions))
+endValue = rep(0,length(suggestions))
+CAGR = rep(0,length(suggestions))
+# Find total return on three known funds
+for (i in 1:length(suggestions)) {
+  startValue[i] = startCash * weights[i]
+  shares[i] = startValue[i] / startPrice[i]
+  endValue[i] = shares[i] * funds[funds$Ticker==suggestions[i],"endPrice"]
+}
+years =  as.numeric((as.Date(funds[funds$Ticker=="VFIAX","endDate"]) -
+                           as.Date("2004-01-30")))/365
+for (i in 1:length(suggestions)) {
+  CAGR[i] = 100*(((endValue[i] / startValue[i])^(1/years)) - 1)
+}
+port = cbind(startValue, endValue,CAGR)
+port.CAGR = 100*((sum(endValue) / startCash)^(1/years) - 1)
+port = rbind(port, c(sum(startValue), sum(endValue), port.CAGR ))
+
+# Add a row for VFIAX for this time period
+ind = fundData$VFIAX['2004-01-30::',]
+ind.startPrice = as.numeric(Ad(ind[1]))
+ind.CAGR = ((VFIAX.endPrice / ind.startPrice)^(1/years)) - 1
+ind.endPrice = startCash / ind.startPrice * VFIAX.endPrice
+port = rbind(port, c(startCash, ind.endPrice, ind.CAGR*100))
+rownames(port) = c(suggestions,"Total Portfolio","VFIAX")
+colnames(port) = c("Start Value","End Value","CAGR")
+port.prices = cbind(as.numeric(Ad(fundData$VWEHX['2004-01-30::',])),
+                    as.numeric(Ad(fundData$VWIAX['2004-01-30::',])),
+                    as.numeric(Ad(fundData$VCSAX['2004-01-30::',])),
+                    as.numeric(Ad(fundData$VGHAX['2004-01-30::',])),
+                    as.numeric(Ad(fundData$VUSTX['2004-01-30::',])))
+
+port.value = sweep(port.prices, MARGIN=2, shares,'*')
+kable(port, caption="EF Portfolio Growth", digits=2)
+
+
+f1 = as.numeric(Ad(ind)) / as.numeric(Ad(ind[1]))
+f2 = port.prices[,1] / port.prices[1,1]
+f3 = port.prices[,2] / port.prices[1,2]
+f4 = port.prices[,3] / port.prices[1,3]
+f5 = port.prices[,4] / port.prices[1,4]
+f6 = port.prices[,5] / port.prices[1,5]
+f7 = rowSums(port.value) / startCash
+
+plot(index(ind),f2,type="l",main="VFIAX vs. Best EF Portfolio (Normalized)",xlab="",ylab="Adjusted Price",col="blue", ylim=(c(0.5,4)))
+lines(index(ind),f1,col="black",lwd=0.5)
+lines(index(ind),f3,col="purple",lwd=0.5)
+lines(index(ind),f4,col="green",lwd=0.5)
+lines(index(ind),f5,col="orange",lwd=0.5)
+lines(index(ind),f6,col="gold",lwd=0.5)
+lines(index(ind),f7,col="red",lwd=2.0)
+abline(h=1)
+legend("topleft",c("VFIAX","VWEHX","VWIAX","VCSAX","VGHAX","VUSTX","Portfolio"),fill=c("black","blue","purple","green","orange","gold","red"))
 ## 
 ## 
